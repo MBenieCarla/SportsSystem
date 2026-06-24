@@ -25,11 +25,6 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'registration_choice' %}">
-                            <i class="fas fa-user-plus"></i> Self-Registration
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link text-white" href="{% url 'tournament_schedule' %}">
                             <i class="fas fa-calendar-alt"></i> Tournament Schedule
                         </a>
@@ -56,12 +51,6 @@
                     </li>
                     
                     <hr class="border-secondary">
-                    
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'profile_settings' %}">
-                            <i class="fas fa-cog"></i> Settings
-                        </a>
-                    </li>
                     <li class="nav-item">
                         <form method="post" action="{% url 'logout' %}" style="display: inline;">
                             {% csrf_token %}

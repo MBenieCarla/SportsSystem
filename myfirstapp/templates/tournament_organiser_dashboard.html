@@ -80,7 +80,6 @@
                 </div>
             </div>
 
-           
             {% if messages %}
                 {% for message in messages %}
                     <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show">
@@ -90,162 +89,67 @@
                 {% endfor %}
             {% endif %}
 
-            <div class="row">
-                <!-- Profile Information (Edit Form) -->
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Edit Profile</h5>
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Username</label>
+                                <p class="form-control-plaintext fs-5">{{ user.username }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Email</label>
+                                <p class="form-control-plaintext fs-5">{{ user.email|default:"Not provided" }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Organisation</label>
+                                <p class="form-control-plaintext fs-5">{{ organiser.organisation_name|default:"Not set" }}</p>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <form method="post">
-                                {% csrf_token %}
-                                
-                                {% if form.non_field_errors %}
-                                    <div class="alert alert-danger">
-                                        {% for error in form.non_field_errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                
-                                <!-- Username (Read-only) -->
-                                <div class="mb-3">
-                                    <label class="form-label">Username</label>
-                                    <input type="text" class="form-control" value="{{ user.username }}" readonly>
-                                    <small class="text-muted">Username cannot be changed</small>
-                                </div>
-                                
-                                <!-- Organisation Name -->
-                                <div class="mb-3">
-                                    <label for="{{ form.organisation_name.id_for_label }}" class="form-label">
-                                        Organisation Name
-                                    </label>
-                                    {{ form.organisation_name }}
-                                    {% if form.organisation_name.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {% for error in form.organisation_name.errors %}
-                                                {{ error }}
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <!-- Phone Number -->
-                                <div class="mb-3">
-                                    <label for="{{ form.phone_number.id_for_label }}" class="form-label">
-                                        Phone Number
-                                    </label>
-                                    {{ form.phone_number }}
-                                    {% if form.phone_number.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {% for error in form.phone_number.errors %}
-                                                {{ error }}
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <!-- Location -->
-                                <div class="mb-3">
-                                    <label for="{{ form.location.id_for_label }}" class="form-label">
-                                        Location
-                                    </label>
-                                    {{ form.location }}
-                                    {% if form.location.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {% for error in form.location.errors %}
-                                                {{ error }}
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> Update Details
-                                </button>
-                            </form>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Phone Number</label>
+                                <p class="form-control-plaintext fs-5">{{ organiser.phone_number|default:"Not provided" }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Location</label>
+                                <p class="form-control-plaintext fs-5">{{ organiser.location|default:"Not provided" }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Member Since</label>
+                                <p class="form-control-plaintext fs-5">{{ user.date_joined|date:"F d, Y" }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Account Overview (Merged - Account Info + Statistics) -->
+            <!-- Statistics Section -->
+            <div class="row mt-4">
                 <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Account Overview</h5>
+                    <div class="card text-white bg-primary">
+                        <div class="card-body text-center">
+                            <h2>{{ total_matches|default:"0" }}</h2>
+                            <p class="mb-0">Total Matches</p>
                         </div>
-                        <div class="card-body">
-                            <ul class="list-group list-group-flush">
-                                <!-- Account Info -->
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">Username:</span>
-                                        <span>{{ user.username }}</span>
-                                    </div>
-                                </li>
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">Email:</span>
-                                        <span>{{ user.email|default:"Not provided" }}</span>
-                                    </div>
-                                </li>
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">Joined:</span>
-                                        <span>{{ user.date_joined|date:"M d, Y" }}</span>
-                                    </div>
-                                </li>
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">Last Login:</span>
-                                        <span>{{ user.last_login|date:"M d, Y H:i" }}</span>
-                                    </div>
-                                </li>
-                                
-                                <!-- Divider -->
-                                <li class="list-group-item bg-light">
-                                    <div class="text-center fw-bold">Statistics</div>
-                                </li>
-                                
-                                <!-- Statistics -->
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">Organisation:</span>
-                                        <span>{{ organiser.organisation_name|default:"Not set" }}</span>
-                                    </div>
-                                </li>
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">Phone:</span>
-                                        <span>{{ organiser.phone_number|default:"Not provided" }}</span>
-                                    </div>
-                                </li>
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">Location:</span>
-                                        <span>{{ organiser.location|default:"Not provided" }}</span>
-                                    </div>
-                                </li>
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">Total Matches:</span>
-                                        <span class="badge bg-primary">{{ total_matches|default:"0" }}</span>
-                                    </div>
-                                </li>
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">Total Teams:</span>
-                                        <span class="badge bg-success">{{ total_teams|default:"0" }}</span>
-                                    </div>
-                                </li>
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="fw-bold">Upcoming Matches:</span>
-                                        <span class="badge bg-warning">{{ upcoming_matches|default:"0" }}</span>
-                                    </div>
-                                </li>
-                            </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-success">
+                        <div class="card-body text-center">
+                            <h2>{{ total_teams|default:"0" }}</h2>
+                            <p class="mb-0">Total Teams</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body text-center">
+                            <h2>{{ upcoming_matches|default:"0" }}</h2>
+                            <p class="mb-0">Upcoming Matches</p>
                         </div>
                     </div>
                 </div>
@@ -254,3 +158,4 @@
     </div>
 </div>
 {% endblock %}
+  
