@@ -1,0 +1,745 @@
+<!-- player_registration.html -->
+{% extends "base.html" %}
+
+{% block title %}Player Registration{% endblock %}
+
+{% block content %}
+<div class="registration-container">
+    <h2>🏆 Player Registration</h2>
+    
+    <form method="post" id="playerRegistrationForm">
+        {% csrf_token %}
+        
+        <div class="form-section">
+            <h3>1. Account Information</h3>
+            
+            <div class="form-group">
+                {{ form.username.label_tag }}
+                {{ form.username }}
+                {{ form.username.errors }}
+            </div>
+            
+            <div class="form-group">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+            
+            <div class="form-group">
+                {{ form.phone_number.label_tag }}
+                {{ form.phone_number }}
+                {{ form.phone_number.errors }}
+            </div>
+            
+            <!-- CHANGE 1: Add ID and help text to location field -->
+            <div class="form-group">
+                {{ form.location.label_tag }}
+                {{ form.location }}
+                {% if form.location.help_text %}
+                    <small class="help-text">{{ form.location.help_text }}</small>
+                {% else %}
+                    <small class="help-text">📍 Enter your city (e.g., LA, New York) to see available teams</small>
+                {% endif %}
+                {{ form.location.errors }}
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    {{ form.password1.label_tag }}
+                    {{ form.password1 }}
+                    {{ form.password1.errors }}
+                </div>
+                <div class="form-group">
+                    {{ form.password2.label_tag }}
+                    {{ form.password2 }}
+                    {{ form.password2.errors }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- CHANGE 2: Add loading indicator and filter info -->
+        <div class="form-section">
+            <h3>2. Select the team you want to join</h3>
+            <p class="warning">⚠️ You cannot complete registration without selecting one team</p>
+            
+            <!-- Add filter status message -->
+            <div id="filter-status" class="filter-status"></div>
+            
+            <!-- Add loading spinner -->
+            <div id="loading-teams" class="loading-spinner" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading teams in your location...</p>
+            </div>
+            
+            {% if form.selected_team.errors %}
+                <div class="error-message">{{ form.selected_team.errors }}</div>
+            {% endif %}
+            
+            <!-- CHANGE 3: Wrap teams in a container that can be updated via JavaScript -->
+            <div id="teams-container">
+                <div class="teams-grid" id="teams-grid">
+                    <!-- Teams will be dynamically loaded here -->
+                    {% for team in teams %}
+                    <div class="team-card" data-team-id="{{ team.id }}" data-team-location="{{ team.location }}">
+                        <label class="team-label">
+                            <input type="radio" 
+                                   name="selected_team" 
+                                   value="{{ team.id }}"
+                                   class="team-radio"
+                                   {% if not team.is_available %}disabled{% endif %}>
+                            
+                            <div class="team-info">
+                                <h3>{{ team.team_name }}</h3>
+                                
+                                <div class="team-details">
+                                    <p><strong>🏋️ Trainer:</strong> {{ team.trainer }}</p>
+                                    <p><strong>📍 Location:</strong> {{ team.location }}</p>
+                                    <p><strong>👥 Team Size:</strong> {{ team.current_members }}/{{ team.max_members }}</p>
+                                    <p><strong>🎯 Available Spots:</strong> 
+                                        <span class="spots">{{ team.available_spots }}</span>
+                                    </p>
+                                </div>
+                                
+                                <div class="team-stats">
+                                    <h4>📊 Team Statistics:</h4>
+                                    <div class="stats-grid">
+                                        <div class="stat">
+                                            <span class="stat-label">Matches Played:</span>
+                                            <span class="stat-value">{{ team.matches_played }}</span>
+                                        </div>
+                                        <div class="stat">
+                                            <span class="stat-label">Wins:</span>
+                                            <span class="stat-value win">{{ team.matches_won }}</span>
+                                        </div>
+                                        <div class="stat">
+                                            <span class="stat-label">Losses:</span>
+                                            <span class="stat-value loss">{{ team.matches_lost }}</span>
+                                        </div>
+                                        <div class="stat">
+                                            <span class="stat-label">Draws:</span>
+                                            <span class="stat-value">{{ team.matches_drawn }}</span>
+                                        </div>
+                                        <div class="stat">
+                                            <span class="stat-label">Win Rate:</span>
+                                            <span class="stat-value">{{ team.win_rate|floatformat:1 }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="recent-matches">
+                                    <h4>📅 Recent Match Results:</h4>
+                                    {% for match in team.matches.all|slice:":3" %}
+                                    <div class="match-result">
+                                        vs <strong>{{ match.opponent }}</strong> - 
+                                        {{ match.team_score }} : {{ match.opponent_score }}
+                                        <span class="result-badge {{ match.result|lower }}">{{ match.result }}</span>
+                                        <small>({{ match.date }})</small>
+                                    </div>
+                                    {% empty %}
+                                    <p class="no-matches">No match history yet</p>
+                                    {% endfor %}
+                                </div>
+                                
+                                {% if not team.is_available %}
+                                    <div class="full-badge">⚠️ TEAM FULL</div>
+                                {% endif %}
+                            </div>
+                        </label>
+                    </div>
+                    {% empty %}
+                        <p class="no-teams">No teams available at this time.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <button type="submit" class="submit-btn">Join Team & Register</button>
+    </form>
+    
+    <div class="login-link">
+        <a href="{% url 'login' %}">Already have an account? Login</a>
+    </div>
+</div>
+
+<style>
+.registration-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.form-section {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.form-section h3 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 2px solid #4CAF50;
+    padding-bottom: 10px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.warning {
+    color: #f44336;
+    font-weight: bold;
+    margin: 10px 0;
+    background: #fff3cd;
+    padding: 10px;
+    border-left: 4px solid #ffc107;
+}
+
+.help-text {
+    display: block;
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Filter status styles */
+.filter-status {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    display: none;
+}
+
+.filter-status.info {
+    display: block;
+    background: #e3f2fd;
+    color: #1976d2;
+    border-left: 4px solid #1976d2;
+}
+
+.filter-status.warning {
+    display: block;
+    background: #fff3e0;
+    color: #f57c00;
+    border-left: 4px solid #f57c00;
+}
+
+.filter-status.error {
+    display: block;
+    background: #ffebee;
+    color: #c62828;
+    border-left: 4px solid #c62828;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    text-align: center;
+    padding: 40px;
+    background: white;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #4CAF50;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Teams Grid */
+.teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.team-card {
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s;
+    cursor: pointer;
+    background: white;
+}
+
+.team-card:hover {
+    border-color: #ff9800;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+}
+
+.team-card input[type="radio"] {
+    margin-right: 15px;
+    transform: scale(1.3);
+    margin-bottom: 15px;
+}
+
+.team-card.selected {
+    border-color: #4CAF50;
+    background: #e8f5e9;
+    box-shadow: 0 4px 12px rgba(76,175,80,0.2);
+}
+
+.team-label {
+    cursor: pointer;
+    display: block;
+}
+
+.team-info h3 {
+    margin: 0 0 15px 0;
+    color: #ff9800;
+    font-size: 24px;
+}
+
+.team-details {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.spots {
+    font-weight: bold;
+    color: #4CAF50;
+    font-size: 18px;
+}
+
+.team-stats {
+    background: #e3f2fd;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px;
+    background: white;
+    border-radius: 5px;
+}
+
+.stat-label {
+    font-weight: bold;
+}
+
+.stat-value.win {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.stat-value.loss {
+    color: #f44336;
+}
+
+.recent-matches {
+    background: #fff3e0;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.match-result {
+    padding: 5px;
+    margin: 5px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.result-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-left: 10px;
+}
+
+.result-badge.win {
+    background: #4CAF50;
+    color: white;
+}
+
+.result-badge.loss {
+    background: #f44336;
+    color: white;
+}
+
+.result-badge.draw {
+    background: #ff9800;
+    color: white;
+}
+
+.full-badge {
+    display: inline-block;
+    background: #f44336;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.no-teams {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    font-size: 16px;
+}
+
+.submit-btn {
+    background: #4CAF50;
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: bold;
+}
+
+.submit-btn:hover {
+    background: #45a049;
+}
+
+.error-message {
+    color: #f44336;
+    padding: 10px;
+    background: #ffebee;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.no-matches {
+    color: #999;
+    font-style: italic;
+    margin: 5px 0;
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.login-link a {
+    color: #4CAF50;
+    text-decoration: none;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+</style>
+
+<!-- CHANGE 4: Completely rewritten JavaScript for dynamic filtering -->
+<script>
+// Get DOM elements
+const locationInput = document.querySelector('input[name="location"]');
+const teamsGrid = document.getElementById('teams-grid');
+const filterStatus = document.getElementById('filter-status');
+const loadingSpinner = document.getElementById('loading-teams');
+
+// Function to show status messages
+function showStatus(message, type = 'info') {
+    filterStatus.textContent = message;
+    filterStatus.className = `filter-status ${type}`;
+    filterStatus.style.display = 'block';
+}
+
+// Function to hide status
+function hideStatus() {
+    filterStatus.style.display = 'none';
+}
+
+// Function to show/hide loading spinner
+function setLoading(loading) {
+    if (loading) {
+        loadingSpinner.style.display = 'block';
+        teamsGrid.style.display = 'none';
+    } else {
+        loadingSpinner.style.display = 'none';
+        teamsGrid.style.display = 'grid';
+    }
+}
+
+// Function to render team cards
+function renderTeams(teams) {
+    if (!teams || teams.length === 0) {
+        teamsGrid.innerHTML = '<p class="no-teams">No teams found in this location. Please check your location or contact support.</p>';
+        teamsGrid.style.display = 'grid';
+        return;
+    }
+    
+    let teamsHtml = '';
+    teams.forEach(team => {
+        const isAvailable = team.current_members < team.max_members;
+        const availableSpots = team.max_members - team.current_members;
+        const winRate = (team.matches_played > 0) ? (team.matches_won / team.matches_played * 100) : 0;
+        
+        teamsHtml += `
+            <div class="team-card" data-team-id="${team.id}" data-team-location="${team.location}">
+                <label class="team-label">
+                    <input type="radio" 
+                           name="selected_team" 
+                           value="${team.id}"
+                           class="team-radio"
+                           ${!isAvailable ? 'disabled' : ''}>
+                    
+                    <div class="team-info">
+                        <h3>${escapeHtml(team.team_name)}</h3>
+                        
+                        <div class="team-details">
+                            <p><strong>🏋️ Trainer:</strong> ${escapeHtml(team.trainer_name || 'Not Assigned')}</p>
+                            <p><strong>📍 Location:</strong> ${escapeHtml(team.location)}</p>
+                            <p><strong>👥 Team Size:</strong> ${team.current_members}/${team.max_members}</p>
+                            <p><strong>🎯 Available Spots:</strong> 
+                                <span class="spots">${availableSpots}</span>
+                            </p>
+                        </div>
+                        
+                        <div class="team-stats">
+                            <h4>📊 Team Statistics:</h4>
+                            <div class="stats-grid">
+                                <div class="stat">
+                                    <span class="stat-label">Matches Played:</span>
+                                    <span class="stat-value">${team.matches_played || 0}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Wins:</span>
+                                    <span class="stat-value win">${team.matches_won || 0}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Losses:</span>
+                                    <span class="stat-value loss">${team.matches_lost || 0}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Draws:</span>
+                                    <span class="stat-value">${team.matches_drawn || 0}</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-label">Win Rate:</span>
+                                    <span class="stat-value">${winRate.toFixed(1)}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="recent-matches">
+                            <h4>📅 Recent Match Results:</h4>
+                            ${renderRecentMatches(team.recent_matches || [])}
+                        </div>
+                        
+                        ${!isAvailable ? '<div class="full-badge">⚠️ TEAM FULL</div>' : ''}
+                    </div>
+                </label>
+            </div>
+        `;
+    });
+    
+    teamsGrid.innerHTML = teamsHtml;
+    teamsGrid.style.display = 'grid';
+    
+    // Re-attach radio button event listeners
+    attachRadioEventListeners();
+}
+
+// Helper function to escape HTML
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+// Helper function to render recent matches
+function renderRecentMatches(matches) {
+    if (!matches || matches.length === 0) {
+        return '<p class="no-matches">No match history yet</p>';
+    }
+    
+    let matchesHtml = '';
+    matches.slice(0, 3).forEach(match => {
+        matchesHtml += `
+            <div class="match-result">
+                vs <strong>${escapeHtml(match.opponent)}</strong> - 
+                ${match.team_score} : ${match.opponent_score}
+                <span class="result-badge ${match.result.toLowerCase()}">${match.result}</span>
+                <small>(${match.date})</small>
+            </div>
+        `;
+    });
+    return matchesHtml;
+}
+
+// Function to attach event listeners to radio buttons
+function attachRadioEventListeners() {
+    document.querySelectorAll('.team-radio').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('.team-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            if (this.checked) {
+                this.closest('.team-card').classList.add('selected');
+            }
+        });
+    });
+}
+
+// Main function to filter teams by location
+async function filterTeamsByLocation(location) {
+    if (!location || location.trim() === '') {
+        // Show all teams if no location entered
+        showStatus('📍 Please enter your location to see available teams in your area', 'info');
+        // Optionally show all teams or keep empty
+        if (allTeamsData) {
+            renderTeams(allTeamsData);
+        }
+        return;
+    }
+    
+    // Show loading state
+    setLoading(true);
+    showStatus(`🔍 Finding teams in ${location}...`, 'info');
+    
+    try {
+        // Fetch teams matching the location
+        const response = await fetch(`/api/teams-by-location/?location=${encodeURIComponent(location)}`);
+        
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        const teams = await response.json();
+        
+        if (teams.length === 0) {
+            showStatus(`❌ No teams found in ${location}. Please check your location or try a different city.`, 'warning');
+            renderTeams([]);
+        } else {
+            showStatus(`✅ Found ${teams.length} team(s) in ${location}! Select one to join.`, 'info');
+            renderTeams(teams);
+        }
+    } catch (error) {
+        console.error('Error fetching teams:', error);
+        showStatus('⚠️ Error loading teams. Please try again or refresh the page.', 'error');
+        renderTeams([]);
+    } finally {
+        setLoading(false);
+        hideStatusAfterDelay(5000);
+    }
+}
+
+// Hide status message after delays
+let statusTimeout;
+function hideStatusAfterDelay(delay) {
+    if (statusTimeout) clearTimeout(statusTimeout);
+    statusTimeout = setTimeout(() => {
+        if (filterStatus.style.display === 'block') {
+            filterStatus.style.opacity = '0';
+            setTimeout(() => {
+                filterStatus.style.display = 'none';
+                filterStatus.style.opacity = '1';
+            }, 300);
+        }
+    }, delay);
+}
+
+// Debounce function to avoid too many API calls
+let debounceTimer;
+function debounce(func, delay) {
+    return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => func.apply(context, args), delay);
+    };
+}
+
+// Store original teams data if you want to reset
+let allTeamsData = null;
+
+// Get initial teams data on page load
+async function loadInitialTeams() {
+    try {
+        const response = await fetch('/api/teams-by-location/?location=');
+        if (response.ok) {
+            allTeamsData = await response.json();
+        }
+    } catch (error) {
+        console.error('Error loading initial teams:', error);
+    }
+}
+
+// Event listeners
+if (locationInput) {
+    // Filter as user types (with debounce)
+    locationInput.addEventListener('input', debounce(function() {
+        filterTeamsByLocation(this.value);
+    }, 500));
+    
+    // Also filter when field loses focus
+    locationInput.addEventListener('blur', function() {
+        filterTeamsByLocation(this.value);
+    });
+}
+
+// Initial load
+loadInitialTeams();
+
+// Form submission validation
+document.getElementById('playerRegistrationForm').addEventListener('submit', function(e) {
+    const selectedTeam = document.querySelector('input[name="selected_team"]:checked');
+    if (!selectedTeam) {
+        e.preventDefault();
+        alert('❌ You must select ONE team to complete registration as a player!');
+    }
+});
+
+// Initial radio button setup
+attachRadioEventListeners();
+
+// If location is pre-filled (e.g., form validation error), filter immediately
+if (locationInput && locationInput.value) {
+    filterTeamsByLocation(locationInput.value);
+}
+</script>
+{% endblock %}

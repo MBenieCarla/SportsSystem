@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Trainer{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>Trainer Portal</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active text-white" href="{% url 'trainer_dashboard' %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_profile' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'my_teams' %}">
+                            <i class="fas fa-users"></i> My Teams
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_schedule' %}">
+                            <i class="fas fa-calendar-alt"></i> Training Schedule
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'team_performance' %}">
+                            <i class="fas fa-chart-line"></i> Team Performance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_development' %}">
+                            <i class="fas fa-user-graduate"></i> Player Development
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'training_sessions' %}">
+                            <i class="fas fa-dumbbell"></i> Training Sessions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'chat_list' %}">
+                            <i class="fas fa-envelope"></i> Messages
+                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Trainer Dashboard</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <span class="badge bg-info">Trainer</span>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <h5 class="card-title">Teams Coaching</h5>
+                            <h2>{{ teams_coaching|default:"0" }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Players</h5>
+                            <h2>{{ total_players|default:"0" }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body">
+                            <h5 class="card-title">Training Sessions</h5>
+                            <h2>{{ training_sessions_count|default:"0" }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white bg-info">
+                        <div class="card-body">
+                            <h5 class="card-title">Team Win Rate</h5>
+                            <h2>{{ team_win_rate|default:"0" }}%</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Teams -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>My Teams</h5>
+                </div>
+                <div class="card-body">
+                    {% if my_teams %}
+                        <div class="row">
+                            {% for team in my_teams %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ team.team_name }}</h5>
+                                            <p class="card-text">
+                                                <strong>Players:</strong> {{ team.current_members }}/{{ team.max_members }}<br>
+                                                <strong>Matches:</strong> {{ team.matches_played }}<br>
+                                                <strong>Win Rate:</strong> {{ team.win_rate|floatformat:1 }}%
+                                            </p>
+                                            <a href="{% url 'team_detail' team.id %}" class="btn btn-primary btn-sm">View Team</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">You are not coaching any teams yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Upcoming Training Sessions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5>Upcoming Training Sessions</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_sessions %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Team</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Location</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for session in upcoming_sessions %}
+                                    <tr>
+                                        <td>{{ session.team.team_name }}</td>
+                                        <td>{{ session.date }}</td>
+                                        <td>{{ session.time }}</td>
+                                        <td>{{ session.location }}</td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-info">Manage</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No upcoming training sessions.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

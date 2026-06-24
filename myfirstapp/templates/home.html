@@ -1,0 +1,43 @@
+<!-- home.html -->
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4">Welcome to Community Sports System</h1>
+            <p class="lead">Your one-stop platform for sports tournaments and team management.</p>
+            
+            {% if user.is_authenticated %}
+                <div class="alert alert-success mt-4">
+                    <h4>Welcome back, {{ user.username }}!</h4>
+                    <p>What would you like to do today?</p>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <a href="{% url 'tournament_schedule' %}" class="btn btn-primary btn-lg w-100">
+                            Tournament Schedule
+                        </a>
+                    </div>
+                    <!-- Add more buttons as needed -->
+                </div>
+                
+                <!-- NO LOGOUT BUTTON HERE - it's already in base.html -->
+                
+            {% else %}
+                <div class="mt-4">
+                    <a href="{% url 'registration_choice' %}" class="btn btn-success btn-lg">
+                        Get Started
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                        Login
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

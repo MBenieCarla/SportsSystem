@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}My Details - Tournament Organiser{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>Tournament Manager</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'tournament_organiser_dashboard' %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active text-white" href="{% url 'organiser_details' %}">
+                            <i class="fas fa-user"></i> My Details
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'registration_choice' %}">
+                            <i class="fas fa-user-plus"></i> Self-Registration
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'tournament_schedule' %}">
+                            <i class="fas fa-calendar-alt"></i> Tournament Schedule
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'manage_teams' %}">
+                            <i class="fas fa-users"></i> Manage Teams
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'manage_matches' %}">
+                            <i class="fas fa-futbol"></i> Match Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'tournament_list' %}">
+                            <i class="fas fa-trophy"></i> Tournaments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'reports' %}">
+                            <i class="fas fa-chart-bar"></i> Reports
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'profile_settings' %}">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">My Details</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <span class="badge bg-primary">Tournament Organiser</span>
+                </div>
+            </div>
+
+            <!-- Display Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
+                <!-- Profile Information -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Profile Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger">
+                                        {% for error in form.non_field_errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Username (Read-only) -->
+                                <div class="mb-3">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                                    <small class="text-muted">Username cannot be changed</small>
+                                </div>
+                                
+                                <!-- Organisation Name -->
+                                <div class="mb-3">
+                                    <label for="{{ form.organisation_name.id_for_label }}" class="form-label">
+                                        {{ form.organisation_name.label }}
+                                    </label>
+                                    {{ form.organisation_name }}
+                                    {% if form.organisation_name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.organisation_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Phone Number -->
+                                <div class="mb-3">
+                                    <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                                        {{ form.phone_number.label }}
+                                    </label>
+                                    {{ form.phone_number }}
+                                    {% if form.phone_number.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.phone_number.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Location -->
+                                <div class="mb-3">
+                                    <label for="{{ form.location.id_for_label }}" class="form-label">
+                                        {{ form.location.label }}
+                                    </label>
+                                    {{ form.location }}
+                                    {% if form.location.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.location.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Details
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Information -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Account Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Username:</span>
+                                    <strong>{{ user.username }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Email:</span>
+                                    <strong>{{ user.email|default:"Not provided" }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Joined:</span>
+                                    <strong>{{ user.date_joined|date:"M d, Y" }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Last Login:</span>
+                                    <strong>{{ user.last_login|date:"M d, Y H:i" }}</strong>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Statistics -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Your Statistics</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Total Matches:</span>
+                                    <strong>{{ total_matches }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Total Teams:</span>
+                                    <strong>{{ total_teams }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Upcoming Matches:</span>
+                                    <strong>{{ upcoming_matches }}</strong>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
