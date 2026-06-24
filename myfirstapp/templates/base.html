@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Tournament Management System{% endblock %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            height: 100vh;
+        }
+        
+        .sidebar .nav-link {
+            font-weight: 500;
+            color: #adb5bd;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Navbar Styles */
+        .navbar-brand {
+            font-weight: bold;
+        }
+        
+        .navbar .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+            transition: all 0.3s;
+        }
+        
+        .navbar .nav-link:hover {
+            color: #fff !important;
+        }
+        
+        .navbar .nav-link i {
+            font-size: 1.2rem;
+        }
+        
+        /* Unread Badge */
+        #unread-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            font-size: 0.6rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 50%;
+            min-width: 18px;
+            text-align: center;
+        }
+        
+        .nav-link-chat {
+            position: relative;
+        }
+        
+        main {
+            padding-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: static;
+                height: auto;
+                padding-top: 0;
+            }
+            .sidebar .nav {
+                display: flex;
+                flex-wrap: wrap;
+            }
+            .sidebar .nav-item {
+                flex: 0 0 50%;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% if user.is_authenticated %}{% url 'tournament_organiser_dashboard' %}{% else %}{% url 'home' %}{% endif %}">
+                <i class="fas fa-trophy"></i> Tournament Manager
+            </a>
+            
+            <ul class="navbar-nav ms-auto flex-row">
+                {% if user.is_authenticated %}
+                    <!-- Chat Link with Unread Badge -->
+                    <li class="nav-item me-3">
+                        <a class="nav-link nav-link-chat" href="{% url 'chat_list' %}" title="Messages">
+                            <i class="fas fa-envelope"></i>
+                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    <!-- User Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle"></i> {{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{% url 'profile_settings' %}">
+                                <i class="fas fa-cog"></i> Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'registration_choice' %}">
+                            <i class="fas fa-user-plus"></i> Register
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div style="padding-top: 56px;">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chat Unread Count Script -->
+    <script>
+        function updateUnreadCounts() {
+            fetch('/chat/get-unread-counts/')
+                .then(response => response.json())
+                .then(data => {
+                    const total = Object.values(data.unread_counts).reduce((a, b) => a + b, 0);
+                    const badge = document.getElementById('unread-badge');
+                    if (total > 0) {
+                        badge.style.display = 'inline';
+                        badge.textContent = total;
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    // Silently fail - chat is optional
+                    console.log('Chat unread count update failed');
+                });
+        }
+        
+        // Update immediately and then every 10 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUnreadCounts();
+        });
+        setInterval(updateUnreadCounts, 10000);
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

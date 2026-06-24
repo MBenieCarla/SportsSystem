@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Registration Choice{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4">Choose Your Registration Type</h1>
+            <p class="lead">Select the role that best describes you</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Tournament Organiser</h5>
+                            <p class="card-text">Create and manage tournaments, schedule matches, and oversee all activities.</p>
+                            <a href="{% url 'tournament_organiser_registration' %}" class="btn btn-primary">Register</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Trainer</h5>
+                            <p class="card-text">Coach teams, manage training sessions, and develop player skills.</p>
+                            <a href="{% url 'trainer_registration' %}" class="btn btn-success">Register</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Player</h5>
+                            <p class="card-text">Join teams, participate in matches, and track your performance.</p>
+                            <a href="{% url 'player_registration' %}" class="btn btn-info">Register</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if room.name %}
+        {{ room.name }}
+    {% else %}
+        Chat
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            {% if room.name %}
+                                {{ room.name }}
+                            {% else %}
+                                Chat with 
+                                {% for participant in other_participants %}
+                                    {{ participant.username }}
+                                {% empty %}
+                                    Group Chat
+                                {% endfor %}
+                            {% endif %}
+                        </h4>
+                        <small class="text-muted">
+                            {% for participant in other_participants %}
+                                {{ participant.username }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                Group Chat
+                            {% endfor %}
+                        </small>
+                    </div>
+                    <div>
+                        {% if room.room_type == 'group' %}
+                            <a href="{% url 'add_participants' room.id %}" class="btn btn-sm btn-success">
+                                <i class="fas fa-user-plus"></i>
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'chat_list' %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body" style="height: 400px; overflow-y: auto;" id="message-container">
+                    <div id="messages">
+                        {% for message in messages %}
+                            <div class="message {% if message.sender == user %}message-own{% else %}message-other{% endif %}" style="margin-bottom: 10px;">
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <strong>{{ message.sender.username }}</strong>
+                                        <small class="text-muted">{{ message.sent_at|time:"H:i" }}</small>
+                                        <p class="mb-0">{{ message.content }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-muted text-center">No messages yet. Start the conversation!</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="card-footer">
+                    <form method="post" id="message-form">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            {{ form.content }}
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-paper-plane"></i> Send
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .message-own {
+        background-color: #007bff;
+        color: white;
+        padding: 10px;
+        border-radius: 10px;
+        margin-left: 20%;
+        margin-right: 0;
+    }
+    .message-other {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 10px;
+        margin-right: 20%;
+        margin-left: 0;
+    }
+    .message-own strong {
+        color: #e9ecef;
+    }
+    .message-own .text-muted {
+        color: #d1ecf1 !important;
+    }
+    .message-other strong {
+        color: #007bff;
+    }
+</style>
+
+<script>
+    // Auto scroll to bottom
+    const container = document.getElementById('message-container');
+    container.scrollTop = container.scrollHeight;
+    
+    // AJAX form submission
+    document.getElementById('message-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const messagesDiv = document.getElementById('messages');
+                const msg = data.message;
+                const isOwn = true;
+                
+                const messageHtml = `
+                    <div class="message message-own" style="margin-bottom: 10px;">
+                        <div class="d-flex">
+                            <div class="flex-grow-1">
+                                <strong>${msg.sender}</strong>
+                                <small class="text-muted">${msg.sent_at}</small>
+                                <p class="mb-0">${msg.content}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                messagesDiv.insertAdjacentHTML('beforeend', messageHtml);
+                container.scrollTop = container.scrollHeight;
+                document.querySelector('#message-form input[type="text"], #message-form textarea').value = '';
+            }
+        });
+    });
+    
+    // Auto refresh messages every 5 seconds
+    let lastMessageId = {{ messages.last.id|default:0 }};
+    
+    setInterval(function() {
+        fetch(`/chat/get-new-messages/{{ room.id }}/?last_id=${lastMessageId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.messages && data.messages.length > 0) {
+                    const messagesDiv = document.getElementById('messages');
+                    let html = '';
+                    data.messages.forEach(msg => {
+                        const isOwn = msg.is_own;
+                        html += `
+                            <div class="message ${isOwn ? 'message-own' : 'message-other'}" style="margin-bottom: 10px;">
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <strong>${msg.sender}</strong>
+                                        <small class="text-muted">${msg.sent_at}</small>
+                                        <p class="mb-0">${msg.content}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        lastMessageId = msg.id;
+                    });
+                    messagesDiv.insertAdjacentHTML('beforeend', html);
+                    container.scrollTop = container.scrollHeight;
+                }
+            });
+    }, 5000);
+</script>
+{% endblock %}

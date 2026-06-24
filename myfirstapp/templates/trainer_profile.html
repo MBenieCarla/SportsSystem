@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Trainer{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>Trainer Portal</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_dashboard' %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active text-white" href="{% url 'trainer_profile' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'my_teams' %}">
+                            <i class="fas fa-users"></i> My Teams
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_schedule' %}">
+                            <i class="fas fa-calendar-alt"></i> Training Schedule
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'team_performance' %}">
+                            <i class="fas fa-chart-line"></i> Team Performance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_development' %}">
+                            <i class="fas fa-user-graduate"></i> Player Development
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'training_sessions' %}">
+                            <i class="fas fa-dumbbell"></i> Training Sessions
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_settings' %}">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">My Profile</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <span class="badge bg-info">Trainer</span>
+                </div>
+            </div>
+
+            <!-- Display Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
+                <!-- Profile Information -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Profile Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger">
+                                        {% for error in form.non_field_errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Username (Read-only) -->
+                                <div class="mb-3">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                                    <small class="text-muted">Username cannot be changed</small>
+                                </div>
+                                
+                                <!-- Email (Read-only) -->
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" value="{{ user.email|default:'Not provided' }}" readonly>
+                                    <small class="text-muted">Email cannot be changed</small>
+                                </div>
+                                
+                                <!-- Phone Number -->
+                                <div class="mb-3">
+                                    <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                                        Phone Number
+                                    </label>
+                                    {{ form.phone_number }}
+                                    {% if form.phone_number.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.phone_number.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Location -->
+                                <div class="mb-3">
+                                    <label for="{{ form.location.id_for_label }}" class="form-label">
+                                        Location
+                                    </label>
+                                    {{ form.location }}
+                                    {% if form.location.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.location.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Specialization -->
+                                <div class="mb-3">
+                                    <label for="{{ form.specialization.id_for_label }}" class="form-label">
+                                        Specialization
+                                    </label>
+                                    {{ form.specialization }}
+                                    {% if form.specialization.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.specialization.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Experience Years -->
+                                <div class="mb-3">
+                                    <label for="{{ form.experience_years.id_for_label }}" class="form-label">
+                                        Experience (Years)
+                                    </label>
+                                    {{ form.experience_years }}
+                                    {% if form.experience_years.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.experience_years.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Certificate -->
+                                <div class="mb-3">
+                                    <label for="{{ form.certificate.id_for_label }}" class="form-label">
+                                        Certificate (PDF)
+                                    </label>
+                                    {{ form.certificate }}
+                                    {% if form.certificate.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.certificate.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    {% if trainer.certificate %}
+                                        <div class="mt-2">
+                                            <span class="text-success">
+                                                <i class="fas fa-check-circle"></i> Current certificate: 
+                                                <a href="{{ trainer.certificate.url }}" target="_blank">
+                                                    {{ trainer.certificate.name|cut:"trainer_certificates/" }}
+                                                </a>
+                                            </span>
+                                        </div>
+                                    {% else %}
+                                        <small class="text-muted">Upload your certificate in PDF format</small>
+                                    {% endif %}
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Profile
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Information & Statistics (Merged) -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Account Overview</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <!-- Account Info -->
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Username:</span>
+                                        <span>{{ user.username }}</span>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Email:</span>
+                                        <span>{{ user.email|default:"Not provided" }}</span>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Joined:</span>
+                                        <span>{{ user.date_joined|date:"M d, Y" }}</span>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Last Login:</span>
+                                        <span>{{ user.last_login|date:"M d, Y H:i" }}</span>
+                                    </div>
+                                </li>
+                                
+                                <!-- Divider -->
+                                <li class="list-group-item bg-light">
+                                    <div class="text-center fw-bold">Statistics</div>
+                                </li>
+                                
+                                <!-- Statistics -->
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Teams Coaching:</span>
+                                        <span class="badge bg-primary">{{ teams_count|default:"0" }}</span>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Total Players:</span>
+                                        <span class="badge bg-success">{{ players_count|default:"0" }}</span>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Experience:</span>
+                                        <span>{{ trainer.experience_years|default:"0" }} years</span>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Specialization:</span>
+                                        <span>{{ trainer.specialization|default:"Not specified" }}</span>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Phone:</span>
+                                        <span>{{ trainer.phone_number|default:"Not provided" }}</span>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Location:</span>
+                                        <span>{{ trainer.location|default:"Not provided" }}</span>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Status:</span>
+                                        <span>
+                                            {% if trainer.is_verified %}
+                                                <span class="badge bg-success">✅ Verified</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">⏳ Pending</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Certificate:</span>
+                                        <span>
+                                            {% if trainer.certificate %}
+                                                <a href="{{ trainer.certificate.url }}" target="_blank" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-file-pdf"></i> View
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">Not uploaded</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
