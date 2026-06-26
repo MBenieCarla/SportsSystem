@@ -14,8 +14,10 @@ from .forms import ChatRoomForm, MessageForm
 import json
 from .models import (
     Team, TournamentSchedule, Player, Trainer, 
-    TournamentOrganiser, ChatRoom, Message, MessageAttachment
+    TournamentOrganiser, ChatRoom, Message, MessageAttachment,
+    TeamJoinRequest, TrainingSession, TournamentApplication, PlayerFeedback
 )
+
 from .forms import (
     TournamentOrganiserRegistrationForm,
     TournamentScheduleForm,
@@ -23,9 +25,12 @@ from .forms import (
     PlayerRegistrationForm,
     OrganiserProfileForm,
     ChatRoomForm,
-    MessageForm
+    MessageForm,
+    TeamForm,
+    TrainingSessionForm,
+    TournamentApplicationForm,
+    PlayerFeedbackForm
 )
-
 
 # === HOME VIEW WITH ROLE-BASED REDIRECT ===
 def home(request):
@@ -144,12 +149,19 @@ def trainer_dashboard(request):
             total_wins += team.matches_won
             total_matches += team.matches_played
         team_win_rate = int((total_wins / total_matches * 100)) if total_matches > 0 else 0
-        
-        # Training sessions (you'll need to add this model)
-        training_sessions_count = 0  # Placeholder
-        upcoming_sessions = []  # Placeholder
+
+        training_sessions_count = TrainingSession.objects.filter(trainer=trainer).count()
+        upcoming_sessions = TrainingSession.objects.filter(
+            trainer=trainer
+        ).order_by('date', 'time')[:5]
+
+        pending_requests_count = TeamJoinRequest.objects.filter(
+            team__trainer=trainer,
+            status='pending'
+        ).count()
         
     except Trainer.DoesNotExist:
+        pending_requests_count = 0
         my_teams = []
         teams_coaching = 0
         total_players = 0
@@ -158,6 +170,7 @@ def trainer_dashboard(request):
         upcoming_sessions = []
     
     context = {
+        'pending_requests_count': pending_requests_count,
         'my_teams': my_teams,
         'teams_coaching': teams_coaching,
         'total_players': total_players,
@@ -234,13 +247,7 @@ def player_registration(request):
     if request.method == 'POST':
         form = PlayerRegistrationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            Player.objects.create(
-                user=user,
-                phone_number=form.cleaned_data.get('phone_number', ''),
-                location=form.cleaned_data.get('location', ''),
-                team=form.cleaned_data.get('team', None)
-            )
+            form.save()
             messages.success(request, 'Registration successful! Please login with your credentials.')
             return redirect('login')
     else:
@@ -250,7 +257,6 @@ def player_registration(request):
         'form': form,
         'teams': teams
     })
-
 
 @login_required
 def tournament_schedule(request):
@@ -318,6 +324,45 @@ def player_profile(request):
 @login_required
 def my_team(request):
     return render(request, 'my_team.html')
+@login_required
+def available_teams(request):
+    player = get_object_or_404(Player, user=request.user)
+
+    teams = Team.objects.filter(
+        is_approved=True,
+        location__iexact=player.location
+    )
+
+    return render(request, 'available_teams.html', {
+        'teams': teams,
+        'player': player
+    })
+
+
+@login_required
+def request_join_team(request, team_id):
+    player = get_object_or_404(Player, user=request.user)
+    team = get_object_or_404(Team, id=team_id)
+
+    if player.team:
+        messages.warning(request, 'You already belong to a team.')
+        return redirect('my_team')
+
+    existing_request = TeamJoinRequest.objects.filter(
+        player=player,
+        team=team
+    ).first()
+
+    if existing_request:
+        messages.info(request, 'You have already requested to join this team.')
+    else:
+        TeamJoinRequest.objects.create(
+            player=player,
+            team=team
+        )
+        messages.success(request, f'Request sent to join {team.team_name}!')
+
+    return redirect('available_teams')
 
 @login_required
 def my_matches(request):
@@ -338,10 +383,77 @@ def player_settings(request):
 @login_required
 def trainer_profile(request):
     return render(request, 'trainer_profile.html')
+@login_required
+def create_team(request):
+    trainer = get_object_or_404(Trainer, user=request.user)
+
+    if request.method == 'POST':
+        form = TeamForm(request.POST)
+
+        if form.is_valid():
+            team = form.save(commit=False)
+            team.trainer = trainer
+            team.is_approved = True
+            team.save()
+
+            messages.success(request, "Team created successfully!")
+
+            return redirect('my_teams')
+    else:
+        form = TeamForm()
+
+    return render(request, 'create_team.html', {
+        'form': form
+    })
+@login_required
+def join_requests(request):
+    trainer = get_object_or_404(Trainer, user=request.user)
+
+    requests = TeamJoinRequest.objects.filter(
+        team__trainer=trainer,
+        status='pending'
+    ).order_by('-requested_at')
+
+    return render(request, 'join_requests.html', {
+        'requests': requests
+    })
+
+
+@login_required
+def accept_join_request(request, request_id):
+    join_request = get_object_or_404(
+        TeamJoinRequest,
+        id=request_id,
+        team__trainer__user=request.user
+    )
+
+    join_request.accept()
+    messages.success(request, 'Player request accepted successfully!')
+    return redirect('join_requests')
+
+
+@login_required
+def decline_join_request(request, request_id):
+    join_request = get_object_or_404(
+        TeamJoinRequest,
+        id=request_id,
+        team__trainer__user=request.user
+    )
+
+    join_request.decline()
+    messages.success(request, 'Player request declined.')
+    return redirect('join_requests')
+
+
 
 @login_required
 def my_teams(request):
-    return render(request, 'my_teams.html')
+    trainer = get_object_or_404(Trainer, user=request.user)
+    teams = Team.objects.filter(trainer=trainer)
+
+    return render(request, 'my_teams.html', {
+        'teams': teams
+    })
 
 @login_required
 def trainer_schedule(request):
@@ -357,7 +469,67 @@ def player_development(request):
 
 @login_required
 def training_sessions(request):
-    return render(request, 'training_sessions.html')
+    trainer = get_object_or_404(Trainer, user=request.user)
+    sessions = TrainingSession.objects.filter(trainer=trainer).order_by('date', 'time')
+
+    return render(request, 'training_sessions.html', {
+        'sessions': sessions
+    })
+
+@login_required
+def create_training_session(request):
+    trainer = get_object_or_404(Trainer, user=request.user)
+
+    if request.method == 'POST':
+        form = TrainingSessionForm(request.POST)
+        form.fields['team'].queryset = Team.objects.filter(trainer=trainer)
+
+        if form.is_valid():
+            session = form.save(commit=False)
+            session.trainer = trainer
+            session.save()
+            messages.success(request, 'Training session created successfully!')
+            return redirect('training_sessions')
+    else:
+        form = TrainingSessionForm()
+        form.fields['team'].queryset = Team.objects.filter(trainer=trainer)
+
+    return render(request, 'create_training_session.html', {
+        'form': form
+    })
+@login_required
+def apply_tournament(request):
+    trainer = get_object_or_404(Trainer, user=request.user)
+
+    if request.method == 'POST':
+        form = TournamentApplicationForm(request.POST)
+        form.fields['team'].queryset = Team.objects.filter(trainer=trainer)
+
+        if form.is_valid():
+            application = form.save(commit=False)
+            application.trainer = trainer
+            application.save()
+
+            messages.success(request, 'Tournament application submitted successfully!')
+            return redirect('tournament_applications')
+    else:
+        form = TournamentApplicationForm()
+        form.fields['team'].queryset = Team.objects.filter(trainer=trainer)
+
+    return render(request, 'apply_tournament.html', {
+        'form': form
+    })
+
+
+@login_required
+def tournament_applications(request):
+    trainer = get_object_or_404(Trainer, user=request.user)
+    applications = TournamentApplication.objects.filter(trainer=trainer).order_by('-applied_at')
+
+    return render(request, 'tournament_applications.html', {
+        'applications': applications
+    })
+
 
 @login_required
 def trainer_settings(request):
@@ -769,3 +941,38 @@ def add_participants(request, room_id):
         'available_users': available_users,
     }
     return render(request, 'add_participants.html', context)
+
+@login_required
+def send_player_feedback(request):
+    trainer = get_object_or_404(Trainer, user=request.user)
+    teams = Team.objects.filter(trainer=trainer)
+    players = Player.objects.filter(team__in=teams)
+
+    if request.method == 'POST':
+        form = PlayerFeedbackForm(request.POST)
+        form.fields['team'].queryset = teams
+        form.fields['player'].queryset = players
+
+        if form.is_valid():
+            feedback = form.save(commit=False)
+            feedback.trainer = trainer
+            feedback.save()
+
+            messages.success(request, 'Feedback sent successfully!')
+            return redirect('player_feedback_list')
+    else:
+        form = PlayerFeedbackForm()
+        form.fields['team'].queryset = teams
+        form.fields['player'].queryset = players
+
+    return render(request, 'send_player_feedback.html', {'form': form})
+
+
+@login_required
+def player_feedback_list(request):
+    trainer = get_object_or_404(Trainer, user=request.user)
+    feedbacks = PlayerFeedback.objects.filter(trainer=trainer)
+
+    return render(request, 'player_feedback_list.html', {
+        'feedbacks': feedbacks
+    })

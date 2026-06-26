@@ -6,7 +6,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.core.validators import FileExtensionValidator
 from .models import (
     Trainer, TournamentOrganiser, Team, Player,
-    TournamentSchedule, ChatRoom, Message
+    TournamentSchedule, ChatRoom, Message,TeamJoinRequest, TrainingSession, TournamentApplication, PlayerFeedback
 )
 
 class BaseUserRegistrationForm(UserCreationForm):
@@ -80,33 +80,21 @@ class PlayerRegistrationForm(BaseUserRegistrationForm):
     )
     
     class Meta(BaseUserRegistrationForm.Meta):
-        # Add player-specific fields that are NOT in User model
         fields = BaseUserRegistrationForm.Meta.fields + ['selected_team']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        location = self.initial.get('location') or self.data.get('location')
-        
-        if location:
-            self.fields['selected_team'].queryset = Team.objects.filter(
-                location__iexact=location
-            )
-            if not self.fields['selected_team'].queryset.exists():
-                self.fields['selected_team'].help_text = f"No teams found in {location}"
-        else:
-            self.fields['selected_team'].queryset = Team.objects.none()
-            self.fields['selected_team'].help_text = "Please enter your location first"
+        self.fields['selected_team'].queryset = Team.objects.filter(is_approved=True)
     
     def clean_selected_team(self):
         team = self.cleaned_data.get('selected_team')
         location = self.cleaned_data.get('location')
         
-        if team and location:
-            if team.location.lower() != location.lower():
-                raise forms.ValidationError(
-                    f"This team is not available in {location}. Please select a team in your location."
-                )
+        # if team and location:
+        #     if team.location.lower() != location.lower():
+        #         raise forms.ValidationError(
+        #             f"This team is not available in {location}. Please select a team in your location."
+        #         )
         
         if team and not team.is_available:
             raise forms.ValidationError(f"Sorry, {team.team_name} is full! Please select another team.")
@@ -115,18 +103,19 @@ class PlayerRegistrationForm(BaseUserRegistrationForm):
     
     def save(self, commit=True):
         user = super().save(commit=True)
-        
-        Player.objects.create(
+
+        player = Player.objects.create(
             user=user,
             phone_number=self.cleaned_data['phone_number'],
             location=self.cleaned_data['location'],
+            team=None
+        )
+
+        TeamJoinRequest.objects.create(
+            player=player,
             team=self.cleaned_data['selected_team']
         )
-        
-        team = self.cleaned_data['selected_team']
-        team.current_members += 1
-        team.save()
-        
+
         return user
 
 class TrainerRegistrationForm(UserCreationForm):
@@ -311,4 +300,59 @@ class MessageForm(forms.ModelForm):
                 'rows': 2,
                 'placeholder': 'Type your message...'
             })
+        }
+
+        # ========== TRAINER WORKFLOW FORMS ==========
+
+class TeamForm(forms.ModelForm):
+    class Meta:
+        model = Team
+        fields = ['team_name', 'location', 'max_members']
+        widgets = {
+            'team_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter team name'}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter team location'}),
+            'max_members': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Maximum members'}),
+        }
+
+
+class TeamJoinRequestForm(forms.ModelForm):
+    class Meta:
+        model = TeamJoinRequest
+        fields = ['team']
+
+
+class TrainingSessionForm(forms.ModelForm):
+    class Meta:
+        model = TrainingSession
+        fields = ['team', 'title', 'date', 'time', 'location', 'description']
+        widgets = {
+            'team': forms.Select(attrs={'class': 'form-select'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Training title'}),
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Training location'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Training details'}),
+        }
+
+
+class TournamentApplicationForm(forms.ModelForm):
+    class Meta:
+        model = TournamentApplication
+        fields = ['team', 'tournament_name', 'reason']
+        widgets = {
+            'team': forms.Select(attrs={'class': 'form-select'}),
+            'tournament_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Tournament name'}),
+            'reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Reason for applying'}),
+        }
+
+
+class PlayerFeedbackForm(forms.ModelForm):
+    class Meta:
+        model = PlayerFeedback
+        fields = ['player', 'team', 'feedback', 'rating']
+        widgets = {
+            'player': forms.Select(attrs={'class': 'form-select'}),
+            'team': forms.Select(attrs={'class': 'form-select'}),
+            'feedback': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Write feedback for the player'}),
+            'rating': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 5}),
         }

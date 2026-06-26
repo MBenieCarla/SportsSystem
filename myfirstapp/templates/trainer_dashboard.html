@@ -132,7 +132,7 @@
                                                 <strong>Matches:</strong> {{ team.matches_played }}<br>
                                                 <strong>Win Rate:</strong> {{ team.win_rate|floatformat:1 }}%
                                             </p>
-                                            <a href="{% url 'team_detail' team.id %}" class="btn btn-primary btn-sm">View Team</a>
+                                  <a href="{% url 'my_teams' %}" class="btn btn-primary btn-sm">View Team</a>
                                         </div>
                                     </div>
                                 </div>

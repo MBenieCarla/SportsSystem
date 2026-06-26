@@ -39,9 +39,10 @@ urlpatterns = [
     path('player/standings/', views.team_standings, name='team_standings'),
     path('player/stats/', views.player_stats, name='player_stats'),
     path('player/settings/', views.player_settings, name='player_settings'),
-    
+
     # Trainer
     path('trainer/profile/', views.trainer_profile, name='trainer_profile'),
+    path('trainer/create-team/', views.create_team, name='create_team'),
     path('trainer/my-teams/', views.my_teams, name='my_teams'),
     path('trainer/schedule/', views.trainer_schedule, name='trainer_schedule'),
     path('trainer/performance/', views.team_performance, name='team_performance'),
@@ -57,6 +58,14 @@ urlpatterns = [
     path('chat/get-new-messages/<int:room_id>/', views.get_new_messages, name='get_new_messages'),
     path('chat/get-unread-counts/', views.get_unread_counts, name='get_unread_counts'),
     
+    path('trainer/join-requests/', views.join_requests, name='join_requests'),
+    path('trainer/join-requests/accept/<int:request_id>/', views.accept_join_request, name='accept_join_request'),
+    path('trainer/join-requests/decline/<int:request_id>/', views.decline_join_request, name='decline_join_request'),
+    path('trainer/sessions/create/', views.create_training_session, name='create_training_session'),
+    path('trainer/tournament/apply/', views.apply_tournament, name='apply_tournament'),
+    path('trainer/tournament/applications/', views.tournament_applications, name='tournament_applications'),
+    path('trainer/feedback/send/', views.send_player_feedback, name='send_player_feedback'),
+    path('trainer/feedback/', views.player_feedback_list, name='player_feedback_list'),
     # Authentication
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', views.logout_view, name='logout'),

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Tournament Applications{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>Tournament Applications</h2>
+
+        <a href="{% url 'apply_tournament' %}" class="btn btn-primary">
+            Apply for Tournament
+        </a>
+    </div>
+
+    {% if applications %}
+        <table class="table table-striped mt-4">
+            <thead class="table-dark">
+                <tr>
+                    <th>Team</th>
+                    <th>Tournament</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Applied At</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for application in applications %}
+                <tr>
+                    <td>{{ application.team.team_name }}</td>
+                    <td>{{ application.tournament_name }}</td>
+                    <td>{{ application.reason }}</td>
+                    <td>{{ application.status }}</td>
+                    <td>{{ application.applied_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="alert alert-info mt-4">
+            No tournament applications submitted yet.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

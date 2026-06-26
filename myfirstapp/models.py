@@ -70,14 +70,18 @@ class Team(models.Model):
             return "Pending Approval"
     
     def save(self, *args, **kwargs):
-        # Auto-update current_members count
-        self.current_members = self.players.count()
-        
         # If approving team, set approved date
         if self.is_approved and not self.approved_date:
             self.approved_date = timezone.now()
         
         super().save(*args, **kwargs)
+
+        # Auto-update current_members only after team has been saved
+        if self.pk:
+            actual_members = self.players.count()
+            if self.current_members != actual_members:
+                self.current_members = actual_members
+                super().save(update_fields=['current_members'])
 
 
 class Match(models.Model):
@@ -507,3 +511,91 @@ class MessageAttachment(models.Model):
     
     def __str__(self):
         return self.filename
+    
+# ========== TRAINER WORKFLOW MODELS ==========
+
+class TeamJoinRequest(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('declined', 'Declined'),
+    ]
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='join_requests')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='join_requests')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    requested_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-requested_at']
+        unique_together = ['player', 'team']
+
+    def __str__(self):
+        return f"{self.player.full_name} requested to join {self.team.team_name}"
+
+    def accept(self):
+        self.status = 'accepted'
+        self.responded_at = timezone.now()
+        self.player.team = self.team
+        self.player.save()
+        self.save()
+
+    def decline(self):
+        self.status = 'declined'
+        self.responded_at = timezone.now()
+        self.save()
+
+
+class TrainingSession(models.Model):
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='training_sessions')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='training_sessions')
+    title = models.CharField(max_length=100)
+    date = models.DateField()
+    time = models.TimeField()
+    location = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['date', 'time']
+
+    def __str__(self):
+        return f"{self.title} - {self.team.team_name} on {self.date}"
+
+
+class TournamentApplication(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('declined', 'Declined'),
+    ]
+
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='tournament_applications')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='tournament_applications')
+    tournament_name = models.CharField(max_length=100)
+    reason = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    applied_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-applied_at']
+
+    def __str__(self):
+        return f"{self.team.team_name} application for {self.tournament_name}"
+
+
+class PlayerFeedback(models.Model):
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='given_feedback')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='feedback')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='player_feedback')
+    feedback = models.TextField()
+    rating = models.IntegerField(validators=[MinValueValidator(1)], default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Feedback for {self.player.full_name} by {self.trainer.full_name}"

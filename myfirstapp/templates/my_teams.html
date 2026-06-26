@@ -1,12 +1,76 @@
 {% extends "base.html" %}
+
 {% block title %}My Teams{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <h1>My Teams</h1>
-            <p>Your teams will be displayed here.</p>
-        </main>
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Teams</h2>
+
+        <a href="{% url 'create_team' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Team
+        </a>
     </div>
+
+    {% if teams %}
+
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Team Name</th>
+                <th>Location</th>
+                <th>Members</th>
+                <th>Maximum Members</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for team in teams %}
+            <tr>
+                <td>{{ team.team_name }}</td>
+                <td>{{ team.location }}</td>
+                <td>{{ team.current_members }}</td>
+                <td>{{ team.max_members }}</td>
+
+                <td>
+                    {% if team.is_approved %}
+                        <span class="badge bg-success">
+                            Approved
+                        </span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">
+                            Pending
+                        </span>
+                    {% endif %}
+                </td>
+
+            </tr>
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% else %}
+
+        <div class="alert alert-info">
+
+            <h5>No teams yet.</h5>
+
+            <p>
+                You haven't created any teams yet.
+            </p>
+
+            <a href="{% url 'create_team' %}" class="btn btn-primary">
+                Create Your First Team
+            </a>
+
+        </div>
+
+    {% endif %}
+
 </div>
 {% endblock %}

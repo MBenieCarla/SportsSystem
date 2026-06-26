@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Send Player Feedback{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Send Player Feedback</h2>
+
+    <form method="POST" class="mt-3">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-primary">
+            Send Feedback
+        </button>
+
+        <a href="{% url 'player_feedback_list' %}" class="btn btn-secondary">
+            Cancel
+        </a>
+    </form>
+</div>
+{% endblock %}

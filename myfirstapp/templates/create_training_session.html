@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Create Training Session{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Create Training Session</h2>
+
+    <form method="POST" class="mt-3">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-primary">
+            Create Session
+        </button>
+
+        <a href="{% url 'training_sessions' %}" class="btn btn-secondary">
+            Cancel
+        </a>
+    </form>
+</div>
+{% endblock %}
