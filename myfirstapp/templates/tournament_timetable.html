@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tournament.name }} - Timetable{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>{% if is_organiser %}Tournament{% else %}Trainer{% endif %} Portal</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% if is_organiser %}{% url 'tournament_organiser_dashboard' %}{% else %}{% url 'trainer_dashboard' %}{% endif %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    
+                    {% if is_organiser %}
+                    <!-- Organiser Sidebar -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'organiser_details' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'manage_tournaments' %}">
+                            <i class="fas fa-trophy"></i> Tournaments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active text-white" href="{% url 'tournament_schedule' %}" style="background-color: rgba(255,255,255,0.1);">
+                            <i class="fas fa-calendar-alt"></i> Match Schedule
+                        </a>
+                    </li>
+                    {% else %}
+                    <!-- Trainer Sidebar -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_profile' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'my_teams' %}">
+                            <i class="fas fa-users"></i> My Teams
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'team_performance' %}">
+                            <i class="fas fa-chart-line"></i> Team Performance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'training_sessions' %}">
+                            <i class="fas fa-dumbbell"></i> Training Sessions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'tournament_list' %}">
+                            <i class="fas fa-trophy"></i> Tournaments
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'chat_list' %}">
+                            <i class="fas fa-envelope"></i> Messages
+                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="fas fa-calendar-alt"></i> {{ tournament.name }} - Timetable</h2>
+                <div>
+                    <a href="{% url 'tournament_detail' tournament.id %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tournament Info -->
+            <div class="alert alert-info">
+                <strong>{{ tournament.name }}</strong> - {{ tournament.sport_type }} | 
+                {{ tournament.location }} | {{ tournament.start_date|date:"M d, Y" }} - {{ tournament.end_date|date:"M d, Y" }}
+            </div>
+
+            <!-- Matches -->
+            {% if matches %}
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> Match Schedule</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Match #</th>
+                                        <th>Teams</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Location</th>
+                                        <th>Status</th>
+                                        <th>Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for match in matches %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-secondary">#{{ match.match_number }}</span>
+                                        </td>
+                                        <td>
+                                            <strong>{{ match.team1.team_name }}</strong> 
+                                            <span class="text-muted">vs</span> 
+                                            <strong>{{ match.team2.team_name }}</strong>
+                                        </td>
+                                        <td>{{ match.date|date:"M d, Y" }}</td>
+                                        <td>{{ match.time|time:"g:i A" }}</td>
+                                        <td><i class="fas fa-map-marker-alt"></i> {{ match.location }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if match.status == 'scheduled' %}info{% elif match.status == 'ongoing' %}warning{% elif match.status == 'completed' %}success{% elif match.status == 'cancelled' %}danger{% else %}secondary{% endif %}">
+                                                {{ match.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if match.status == 'completed' %}
+                                                {% if match.winner %}
+                                                    <span class="text-success">{{ match.winner.team_name }}</span>
+                                                    <small class="text-muted">({{ match.score_team1 }} - {{ match.score_team2 }})</small>
+                                                {% else %}
+                                                    <span class="text-secondary">Draw</span>
+                                                    <small class="text-muted">({{ match.score_team1 }} - {{ match.score_team2 }})</small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> No matches scheduled yet for this tournament.
+                </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}

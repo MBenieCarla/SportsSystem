@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Player{% endblock %}
+{% block title %}Player Dashboard{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar -->
+        <!-- Player Sidebar -->
         <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
             <div class="position-sticky pt-3">
                 <div class="text-center text-white mb-4">
@@ -30,23 +30,23 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'tournament_schedule' %}">
-                            <i class="fas fa-calendar-alt"></i> Match Schedule
+                        <a class="nav-link text-white" href="{% url 'tournament_list' %}">
+                            <i class="fas fa-trophy"></i> Tournaments
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'my_matches' %}">
-                            <i class="fas fa-futbol"></i> My Matches
+                        <a class="nav-link text-white" href="{% url 'player_tournament_schedule' %}">
+                            <i class="fas fa-calendar-alt"></i> Tournament Schedule
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'team_standings' %}">
-                            <i class="fas fa-chart-line"></i> Team Standings
+                        <a class="nav-link text-white" href="{% url 'player_training_sessions' %}">
+                            <i class="fas fa-dumbbell"></i> Training Sessions
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'player_stats' %}">
-                            <i class="fas fa-chart-bar"></i> My Statistics
+                        <a class="nav-link text-white" href="{% url 'player_feedback_for_players' %}">
+                            <i class="fas fa-comment-dots"></i> My Feedback
                         </a>
                     </li>
                     <li class="nav-item">
@@ -77,6 +77,26 @@
                     <span class="badge bg-success">Player</span>
                 </div>
             </div>
+
+            <!-- Display Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Unread Feedback Alert -->
+            {% if unread_feedback_count > 0 %}
+            <div class="alert alert-warning alert-dismissible fade show">
+                <i class="fas fa-bell"></i> 
+                You have <strong>{{ unread_feedback_count }}</strong> unread feedback message(s).
+                <a href="{% url 'player_feedback_for_players' %}" class="alert-link">View your feedback</a>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
 
             <!-- Stats Cards -->
             <div class="row mb-4">
@@ -114,6 +134,30 @@
                 </div>
             </div>
 
+            <!-- Quick Actions -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="{% url 'tournament_list' %}" class="btn btn-primary">
+                                    <i class="fas fa-trophy"></i> View Tournaments
+                                </a>
+                                <a href="{% url 'player_training_sessions' %}" class="btn btn-info">
+                                    <i class="fas fa-dumbbell"></i> Training Sessions
+                                </a>
+                                <a href="{% url 'my_team' %}" class="btn btn-warning">
+                                    <i class="fas fa-users"></i> My Team
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Upcoming Matches -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -136,7 +180,13 @@
                                     {% for match in upcoming_matches %}
                                     <tr>
                                         <td>{{ match.name }}</td>
-                                        <td>{{ match.team2.team_name }}</td>
+                                        <td>
+                                            {% if match.team1 == user.player.team %}
+                                                {{ match.team2.team_name }}
+                                            {% else %}
+                                                {{ match.team1.team_name }}
+                                            {% endif %}
+                                        </td>
                                         <td>{{ match.date }}</td>
                                         <td>{{ match.time }}</td>
                                         <td>{{ match.location }}</td>
@@ -165,6 +215,7 @@
                                         <th>Match</th>
                                         <th>Opponent</th>
                                         <th>Result</th>
+                                        <th>Score</th>
                                         <th>Date</th>
                                     </tr>
                                 </thead>
@@ -172,14 +223,23 @@
                                     {% for match in recent_matches %}
                                     <tr>
                                         <td>{{ match.name }}</td>
-                                        <td>{{ match.team2.team_name }}</td>
+                                        <td>
+                                            {% if match.team1 == user.player.team %}
+                                                {{ match.team2.team_name }}
+                                            {% else %}
+                                                {{ match.team1.team_name }}
+                                            {% endif %}
+                                        </td>
                                         <td>
                                             {% if match.winner == user.player.team %}
                                                 <span class="badge bg-success">Win</span>
-                                            {% else %}
+                                            {% elif match.winner %}
                                                 <span class="badge bg-danger">Loss</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Draw</span>
                                             {% endif %}
                                         </td>
+                                        <td>{{ match.score_team1 }} - {{ match.score_team2 }}</td>
                                         <td>{{ match.date }}</td>
                                     </tr>
                                     {% endfor %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Review Application{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar - Organiser -->
+        <!-- ... same sidebar as create_tournament.html ... -->
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="fas fa-check-circle"></i> Review Application</h2>
+                <a href="{% url 'tournament_details' application.tournament.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Tournament
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Application Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Team:</strong> {{ application.team.team_name }}</p>
+                                    <p><strong>Trainer:</strong> {{ application.trainer.user.get_full_name }}</p>
+                                    <p><strong>Location:</strong> {{ application.team.location }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Tournament:</strong> {{ application.tournament.name }}</p>
+                                    <p><strong>Sport:</strong> {{ application.tournament.sport_type }}</p>
+                                    <p><strong>Applied:</strong> {{ application.applied_at|date:"F d, Y - H:i" }}</p>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            <p><strong>Application Reason:</strong></p>
+                            <div class="p-3 bg-light rounded">
+                                {{ application.reason|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">Review Decision</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST">
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Decision</label>
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" name="action" value="approve" class="btn btn-success">
+                                            <i class="fas fa-check"></i> Approve Application
+                                        </button>
+                                        <button type="submit" name="action" value="decline" class="

@@ -4,80 +4,74 @@
 
 {% block content %}
 <div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
                     <h4><i class="fas fa-plus-circle"></i> Start New Chat</h4>
                 </div>
                 <div class="card-body">
-                    <form method="post">
+                    <form method="POST">
                         {% csrf_token %}
                         
-                        <!-- Chat Type -->
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        
                         <div class="mb-3">
-                            <label class="form-label">Chat Type</label>
+                            <label class="form-label fw-bold">Chat Type</label>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="room_type" value="individual" id="individual" checked>
+                                <input class="form-check-input" type="radio" name="room_type" id="individual" value="individual" checked>
                                 <label class="form-check-label" for="individual">
                                     <i class="fas fa-user"></i> Individual Chat
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="room_type" value="group" id="group">
-                                <label class="form-check-label" for="group">
-                                    <i class="fas fa-users"></i> Group Chat
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="room_type" value="team" id="team">
+                                <input class="form-check-input" type="radio" name="room_type" id="team" value="team">
                                 <label class="form-check-label" for="team">
-                                    <i class="fas fa-users-cog"></i> Team Chat
+                                    <i class="fas fa-users"></i> Team Chat
                                 </label>
                             </div>
                         </div>
-                        
-                        <!-- Team Selection (shown when team chat is selected) -->
-                        <div class="mb-3" id="team-selection-field" style="display: none;">
-                            <label class="form-label">Select Your Team</label>
-                            <select name="team_id" class="form-select" id="team-select">
-                                <option value="">Select a team...</option>
-                                {% for team in my_teams %}
-                                    <option value="{{ team.id }}">{{ team.team_name }}</option>
-                                {% endfor %}
-                            </select>
-                            <small class="text-muted">Select a team to chat with all members</small>
+
+                        <div id="individual-section">
+                            <div class="mb-3">
+                                <label for="user_id" class="form-label">Select User</label>
+                                <select name="user_id" id="user_id" class="form-select">
+                                    <option value="">Select a user...</option>
+                                    {% for user in all_users %}
+                                        <option value="{{ user.id }}">{{ user.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                         </div>
-                        
-                        <!-- Group Name (shown for group chat) -->
-                        <div class="mb-3" id="group-name-field" style="display: none;">
-                            <label class="form-label">Group Name</label>
-                            <input type="text" name="name" class="form-control" placeholder="Enter group name">
+
+                        <div id="team-section" style="display: none;">
+                            <div class="mb-3">
+                                <label for="team_id" class="form-label">Select Team</label>
+                                <select name="team_id" id="team_id" class="form-select">
+                                    <option value="">Select a team...</option>
+                                    {% for team in my_teams %}
+                                        <option value="{{ team.id }}">{{ team.team_name }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if not my_teams %}
+                                    <small class="text-muted">You don't have any teams yet.</small>
+                                {% endif %}
+                            </div>
                         </div>
-                        
-                        <!-- Select Participants -->
-                        <div class="mb-3" id="participants-field">
-                            <label class="form-label">Select Participants</label>
-                            <select name="participants" class="form-select" multiple size="5" required>
-                                {% for user in users %}
-                                    <option value="{{ user.id }}">
-                                        {{ user.username }} 
-                                        {% if user.email %}({{ user.email }}){% endif %}
-                                        {% if user.player.team %}
-                                            - {{ user.player.team.team_name }}
-                                        {% endif %}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                            <small class="text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple users</small>
-                        </div>
-                        
-                        <div class="d-grid gap-2">
+
+                        <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane"></i> Start Chat
+                                <i class="fas fa-plus"></i> Start Chat
                             </button>
                             <a href="{% url 'chat_list' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Cancel
+                                <i class="fas fa-times"></i> Cancel
                             </a>
                         </div>
                     </form>
@@ -88,28 +82,15 @@
 </div>
 
 <script>
-    // Show/hide fields based on chat type
-    document.querySelectorAll('input[name="room_type"]').forEach(radio => {
+    // Toggle between individual and team chat sections
+    document.querySelectorAll('input[name="room_type"]').forEach(function(radio) {
         radio.addEventListener('change', function() {
-            const groupNameField = document.getElementById('group-name-field');
-            const teamSelectionField = document.getElementById('team-selection-field');
-            const participantsField = document.getElementById('participants-field');
-            
-            if (this.value === 'group') {
-                groupNameField.style.display = 'block';
-                teamSelectionField.style.display = 'none';
-                participantsField.style.display = 'block';
-                document.getElementById('team-select').required = false;
-            } else if (this.value === 'team') {
-                groupNameField.style.display = 'none';
-                teamSelectionField.style.display = 'block';
-                participantsField.style.display = 'none';
-                document.getElementById('team-select').required = true;
+            if (this.value === 'individual') {
+                document.getElementById('individual-section').style.display = 'block';
+                document.getElementById('team-section').style.display = 'none';
             } else {
-                groupNameField.style.display = 'none';
-                teamSelectionField.style.display = 'none';
-                participantsField.style.display = 'block';
-                document.getElementById('team-select').required = false;
+                document.getElementById('individual-section').style.display = 'none';
+                document.getElementById('team-section').style.display = 'block';
             }
         });
     });

@@ -38,7 +38,7 @@
                     <div>
                         {% if room.room_type == 'group' %}
                             <a href="{% url 'add_participants' room.id %}" class="btn btn-sm btn-success">
-                                <i class="fas fa-user-plus"></i>
+                                <i class="fas fa-user-plus"></i> Add Members
                             </a>
                         {% endif %}
                         <a href="{% url 'chat_list' %}" class="btn btn-sm btn-secondary">
@@ -70,7 +70,7 @@
                         {% csrf_token %}
                         <div class="input-group">
                             {{ form.content }}
-                            <button class="btn btn-primary" type="submit">
+                            <button class="btn btn-primary" type="submit" id="send-btn">
                                 <i class="fas fa-paper-plane"></i> Send
                             </button>
                         </div>
@@ -106,79 +106,189 @@
     .message-other strong {
         color: #007bff;
     }
+    #message-container {
+        scroll-behavior: smooth;
+    }
+    .message {
+        animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 </style>
 
 <script>
-    // Auto scroll to bottom
-    const container = document.getElementById('message-container');
-    container.scrollTop = container.scrollHeight;
-    
-    // AJAX form submission
-    document.getElementById('message-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
+    (function() {
+        'use strict';
         
-        fetch(window.location.href, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const messagesDiv = document.getElementById('messages');
-                const msg = data.message;
-                const isOwn = true;
-                
-                const messageHtml = `
-                    <div class="message message-own" style="margin-bottom: 10px;">
-                        <div class="d-flex">
-                            <div class="flex-grow-1">
-                                <strong>${msg.sender}</strong>
-                                <small class="text-muted">${msg.sent_at}</small>
-                                <p class="mb-0">${msg.content}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                messagesDiv.insertAdjacentHTML('beforeend', messageHtml);
+        // Get DOM elements
+        var container = document.getElementById('message-container');
+        var messagesDiv = document.getElementById('messages');
+        var messageForm = document.getElementById('message-form');
+        var sendBtn = document.getElementById('send-btn');
+        
+        // Auto scroll to bottom
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // Function to scroll to bottom
+        function scrollToBottom() {
+            if (container) {
                 container.scrollTop = container.scrollHeight;
-                document.querySelector('#message-form input[type="text"], #message-form textarea').value = '';
             }
-        });
-    });
-    
-    // Auto refresh messages every 5 seconds
-    let lastMessageId = {{ messages.last.id|default:0 }};
-    
-    setInterval(function() {
-        fetch(`/chat/get-new-messages/{{ room.id }}/?last_id=${lastMessageId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.messages && data.messages.length > 0) {
-                    const messagesDiv = document.getElementById('messages');
-                    let html = '';
-                    data.messages.forEach(msg => {
-                        const isOwn = msg.is_own;
-                        html += `
-                            <div class="message ${isOwn ? 'message-own' : 'message-other'}" style="margin-bottom: 10px;">
+        }
+        
+        // Function to escape HTML to prevent XSS
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // AJAX form submission
+        if (messageForm) {
+            messageForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Disable send button to prevent double submission
+                if (sendBtn) {
+                    sendBtn.disabled = true;
+                    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                }
+                
+                var formData = new FormData(this);
+                
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                })
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (data.success) {
+                        var msg = data.message;
+                        
+                        var messageHtml = `
+                            <div class="message message-own" style="margin-bottom: 10px;">
                                 <div class="d-flex">
                                     <div class="flex-grow-1">
-                                        <strong>${msg.sender}</strong>
-                                        <small class="text-muted">${msg.sent_at}</small>
-                                        <p class="mb-0">${msg.content}</p>
+                                        <strong>${escapeHtml(msg.sender)}</strong>
+                                        <small class="text-muted">${escapeHtml(msg.sent_at)}</small>
+                                        <p class="mb-0">${escapeHtml(msg.content)}</p>
                                     </div>
                                 </div>
                             </div>
                         `;
-                        lastMessageId = msg.id;
-                    });
-                    messagesDiv.insertAdjacentHTML('beforeend', html);
-                    container.scrollTop = container.scrollHeight;
+                        
+                        if (messagesDiv) {
+                            messagesDiv.insertAdjacentHTML('beforeend', messageHtml);
+                            scrollToBottom();
+                        }
+                        
+                        // Clear the input
+                        var messageInput = document.querySelector('#message-form input[type="text"], #message-form textarea');
+                        if (messageInput) {
+                            messageInput.value = '';
+                            messageInput.focus();
+                        }
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error sending message:', error);
+                    alert('Failed to send message. Please try again.');
+                })
+                .finally(function() {
+                    // Re-enable send button
+                    if (sendBtn) {
+                        sendBtn.disabled = false;
+                        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+                    }
+                });
+            });
+        }
+        
+        // Auto refresh messages every 5 seconds
+        var lastMessageId = parseInt('{{ messages.last.id|default:0 }}');
+        var roomId = parseInt('{{ room.id }}');
+        
+        function fetchNewMessages() {
+            var url = '/chat/get-new-messages/' + roomId + '/?last_id=' + lastMessageId;
+            
+            fetch(url)
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (data.messages && data.messages.length > 0) {
+                        var html = '';
+                        data.messages.forEach(function(msg) {
+                            var isOwn = (msg.is_own === true);
+                            html += `
+                                <div class="message ${isOwn ? 'message-own' : 'message-other'}" style="margin-bottom: 10px;">
+                                    <div class="d-flex">
+                                        <div class="flex-grow-1">
+                                            <strong>${escapeHtml(msg.sender)}</strong>
+                                            <small class="text-muted">${escapeHtml(msg.sent_at)}</small>
+                                            <p class="mb-0">${escapeHtml(msg.content)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            lastMessageId = msg.id;
+                        });
+                        
+                        if (messagesDiv) {
+                            messagesDiv.insertAdjacentHTML('beforeend', html);
+                            scrollToBottom();
+                        }
+                    }
+                })
+                .catch(function(error) {
+                    // Silent fail for auto-refresh
+                    console.debug('Error fetching messages:', error);
+                });
+        }
+        
+        // Start auto-refresh
+        setInterval(fetchNewMessages, 5000);
+        
+        // Also fetch new messages when tab becomes visible again
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                fetchNewMessages();
+            }
+        });
+        
+        // Focus on input when page loads
+        var messageInput = document.querySelector('#message-form input[type="text"], #message-form textarea');
+        if (messageInput) {
+            messageInput.focus();
+        }
+        
+        // Send message on Ctrl+Enter or Cmd+Enter
+        if (messageInput) {
+            messageInput.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    if (messageForm) {
+                        messageForm.dispatchEvent(new Event('submit'));
+                    }
                 }
             });
-    }, 5000);
+        }
+        
+    })();
 </script>
 {% endblock %}

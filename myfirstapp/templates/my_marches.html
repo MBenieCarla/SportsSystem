@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block title %}My Matches{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-trophy"></i> My Matches</h2>
+        <a href="{% url 'player_dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- No Team Message -->
+    {% if not has_team %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-users" style="font-size: 60px; color: #ccc;"></i>
+                <h4 class="mt-3">{{ no_team_message|default:"You are not in a team yet." }}</h4>
+                <p class="text-muted">Join a team to see your match schedule.</p>
+                <a href="{% url 'available_teams' %}" class="btn btn-primary mt-3">
+                    <i class="fas fa-search"></i> Find a Team
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <!-- Team Info Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-users"></i> {{ my_team.team_name }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Trainer:</strong> {{ my_team.trainer.user.username|default:"Not assigned" }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Location:</strong> {{ my_team.location }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Members:</strong> {{ my_team.current_members }}/{{ my_team.max_members }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Win Rate:</strong> {{ my_team.win_rate|floatformat:1 }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs for Upcoming and Past Matches -->
+        <ul class="nav nav-tabs mb-4" id="matchTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="upcoming-tab" data-toggle="tab" data-target="#upcoming" type="button" role="tab" aria-controls="upcoming" aria-selected="true">
+                    <i class="fas fa-calendar-check"></i> Upcoming Matches
+                    {% if upcoming_matches %}
+                        <span class="badge badge-primary">{{ upcoming_matches|length }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="past-tab" data-toggle="tab" data-target="#past" type="button" role="tab" aria-controls="past" aria-selected="false">
+                    <i class="fas fa-history"></i> Past Matches
+                    {% if past_matches %}
+                        <span class="badge badge-secondary">{{ past_matches|length }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="all-tab" data-toggle="tab" data-target="#all" type="button" role="tab" aria-controls="all" aria-selected="false">
+                    <i class="fas fa-list"></i> All Matches
+                    {% if all_matches %}
+                        <span class="badge badge-info">{{ all_matches|length }}</span>
+                    {% endif %}
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="matchTabsContent">
+            <!-- Upcoming Matches Tab -->
+            <div class="tab-pane fade show active" id="upcoming" role="tabpanel" aria-labelledby="upcoming-tab">
+                {% if upcoming_matches %}
+                    <div class="list-group">
+                        {% for match in upcoming_matches %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="mb-1">
+                                            <span class="badge badge-warning">{{ match.get_status_display }}</span>
+                                            {{ match.name }}
+                                        </h5>
+                                        <p class="mb-1">
+                                            <strong>{{ match.team1.team_name }}</strong> 
+                                            <span class="vs-text">vs</span> 
+                                            <strong>{{ match.team2.team_name }}</strong>
+                                        </p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-alt"></i> {{ match.date }} 
+                                            <i class="fas fa-clock ml-2"></i> {{ match.time }}
+                                            <i class="fas fa-map-marker-alt ml-2"></i> {{ match.location }}
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <span class="badge badge-info">{{ match.get_status_display }}</span>
+                                        {% if match.team1 == my_team or match.team2 == my_team %}
+                                            <span class="badge badge-success">Your Team</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="card">
+                        <div class="card-body text-center py-4">
+                            <i class="fas fa-calendar-check" style="font-size: 40px; color: #28a745;"></i>
+                            <h5 class="mt-3">No Upcoming Matches</h5>
+                            <p class="text-muted">Your team has no scheduled matches yet.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Past Matches Tab -->
+            <div class="tab-pane fade" id="past" role="tabpanel" aria-labelledby="past-tab">
+                {% if past_matches %}
+                    <div class="list-group">
+                        {% for match in past_matches %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="mb-1">
+                                            <span class="badge badge-secondary">Completed</span>
+                                            {{ match.name }}
+                                        </h5>
+                                        <p class="mb-1">
+                                            <strong>{{ match.team1.team_name }}</strong> 
+                                            <span class="vs-text">vs</span> 
+                                            <strong>{{ match.team2.team_name }}</strong>
+                                        </p>
+                                        <p class="mb-1">
+                                            <span class="font-weight-bold">Score:</span>
+                                            {{ match.score_team1 }} - {{ match.score_team2 }}
+                                            {% if match.winner == my_team %}
+                                                <span class="badge badge-success"><i class="fas fa-trophy"></i> Win!</span>
+                                            {% elif match.winner %}
+                                                <span class="badge badge-danger">Loss</span>
+                                            {% else %}
+                                                <span class="badge badge-warning">Draw</span>
+                                            {% endif %}
+                                        </p>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-alt"></i> {{ match.date }} 
+                                            <i class="fas fa-clock ml-2"></i> {{ match.time }}
+                                            <i class="fas fa-map-marker-alt ml-2"></i> {{ match.location }}
+                                        </small>
+                                    </div>
+                                    <div>
+                                        {% if match.winner == my_team %}
+                                            <span class="badge badge-success">W</span>
+                                        {% elif match.winner %}
+                                            <span class="badge badge-danger">L</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">D</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="card">
+                        <div class="card-body text-center py-4">
+                            <i class="fas fa-history" style="font-size: 40px; color: #6c757d;"></i>
+                            <h5 class="mt-3">No Past Matches</h5>
+                            <p class="text-muted">Your team hasn't played any matches yet.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- All Matches Tab -->
+            <div class="tab-pane fade" id="all" role="tabpanel" aria-labelledby="all-tab">
+                {% if all_matches %}
+                    <div class="list-group">
+                        {% for match in all_matches %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="mb-1">
+                                            <span class="badge {% if match.status == 'completed' %}badge-secondary{% elif match.status == 'ongoing' %}badge-warning{% else %}badge-info{% endif %}">
+                                                {{ match.get_status_display }}
+                                            </span>
+                                            {{ match.name }}
+                                        </h5>
+                                        <p class="mb-1">
+                                            <strong>{{ match.team1.team_name }}</strong> 
+                                            <span class="vs-text">vs</span> 
+                                            <strong>{{ match.team2.team_name }}</strong>
+                                        </p>
+                                        {% if match.status == 'completed' %}
+                                            <p class="mb-1">
+                                                <span class="font-weight-bold">Score:</span>
+                                                {{ match.score_team1 }} - {{ match.score_team2 }}
+                                                {% if match.winner == my_team %}
+                                                    <span class="badge badge-success"><i class="fas fa-trophy"></i> Win!</span>
+                                                {% elif match.winner %}
+                                                    <span class="badge badge-danger">Loss</span>
+                                                {% else %}
+                                                    <span class="badge badge-warning">Draw</span>
+                                                {% endif %}
+                                            </p>
+                                        {% endif %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-alt"></i> {{ match.date }} 
+                                            <i class="fas fa-clock ml-2"></i> {{ match.time }}
+                                            <i class="fas fa-map-marker-alt ml-2"></i> {{ match.location }}
+                                        </small>
+                                    </div>
+                                    <div>
+                                        {% if match.team1 == my_team or match.team2 == my_team %}
+                                            <span class="badge badge-success">Your Team</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="card">
+                        <div class="card-body text-center py-4">
+                            <i class="fas fa-calendar-alt" style="font-size: 40px; color: #6c757d;"></i>
+                            <h5 class="mt-3">No Matches Found</h5>
+                            <p class="text-muted">There are no matches available for your team.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Match Statistics Summary -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5><i class="fas fa-chart-bar"></i> Match Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="stat-box">
+                            <h3>{{ total_matches }}</h3>
+                            <p class="text-muted">Total Matches</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-box">
+                            <h3 class="text-success">{{ wins }}</h3>
+                            <p class="text-muted">Wins</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-box">
+                            <h3 class="text-danger">{{ losses }}</h3>
+                            <p class="text-muted">Losses</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-box">
+                            <h3 class="text-warning">{{ draws }}</h3>
+                            <p class="text-muted">Draws</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .vs-text {
+        color: #ff9800;
+        font-weight: bold;
+        margin: 0 10px;
+    }
+    .badge-lg {
+        font-size: 16px;
+        padding: 8px 15px;
+    }
+    .list-group-item {
+        transition: all 0.3s ease;
+    }
+    .list-group-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .tab-pane {
+        min-height: 200px;
+    }
+    .nav-tabs .nav-link {
+        color: #495057;
+    }
+    .nav-tabs .nav-link.active {
+        color: #007bff;
+        font-weight: bold;
+    }
+    .stat-box {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    .stat-box h3 {
+        margin-bottom: 0;
+        font-size: 32px;
+        font-weight: bold;
+    }
+</style>
+
+<!-- Bootstrap 4 JS for tabs -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var triggerTabList = [].slice.call(document.querySelectorAll('#matchTabs button'));
+        triggerTabList.forEach(function(triggerEl) {
+            var tabTrigger = new bootstrap.Tab(triggerEl);
+            triggerEl.addEventListener('click', function(event) {
+                event.preventDefault();
+                tabTrigger.show();
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.utils import timezone
 from datetime import date as datetime_date
-from django.core.validators import FileExtensionValidator, MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Team(models.Model):
@@ -23,7 +23,6 @@ class Team(models.Model):
     matches_lost = models.IntegerField(default=0)
     matches_drawn = models.IntegerField(default=0)
     
-    # Approval system
     is_approved = models.BooleanField(default=False)
     approved_by = models.ForeignKey(
         User, 
@@ -33,8 +32,6 @@ class Team(models.Model):
         related_name='approved_teams'
     )
     approved_date = models.DateTimeField(null=True, blank=True)
-    
-    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -55,6 +52,11 @@ class Team(models.Model):
     @property
     def is_full(self):
         return self.current_members >= self.max_members
+    @property
+    def update_member_count(self):
+        """Update current_members to match actual player count"""
+        self.current_members = self.players.count()
+        self.save(update_fields=['current_members'])
     
     @property
     def win_rate(self):
@@ -64,20 +66,18 @@ class Team(models.Model):
     
     @property
     def status(self):
-        if self.is_approved:
-            return "Approved"
-        else:
-            return "Pending Approval"
+        return "Approved" if self.is_approved else "Pending Approval"
     
     def save(self, *args, **kwargs):
-        # Auto-update current_members count
-        self.current_members = self.players.count()
-        
-        # If approving team, set approved date
         if self.is_approved and not self.approved_date:
             self.approved_date = timezone.now()
-        
         super().save(*args, **kwargs)
+        if self.pk:
+            actual_members = self.players.count()
+            if self.current_members != actual_members:
+                self.current_members = actual_members
+                super().save(update_fields=['current_members'])
+    
 
 
 class Match(models.Model):
@@ -90,14 +90,13 @@ class Match(models.Model):
     
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='matches')
     opponent = models.CharField(max_length=100)
-    date = models.DateField()  # Changed from auto_now_add to allow manual entry
-    time = models.TimeField(null=True, blank=True)  # Added time field
+    date = models.DateField()
+    time = models.TimeField(null=True, blank=True)
     team_score = models.IntegerField(validators=[MinValueValidator(0)], default=0)
     opponent_score = models.IntegerField(validators=[MinValueValidator(0)], default=0)
     location = models.CharField(max_length=200)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
     
-    # Tracking
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_matches')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -118,8 +117,7 @@ class Match(models.Model):
             return "Win"
         elif self.team_score < self.opponent_score:
             return "Loss"
-        else:
-            return "Draw"
+        return "Draw"
     
     @property
     def is_upcoming(self):
@@ -133,35 +131,21 @@ class Match(models.Model):
     def is_past(self):
         return datetime_date.today() > self.date
     
-    @property
-    def result_display(self):
-        if self.status != 'completed':
-            return "Match not completed"
-        return f"{self.team.team_name} {self.team_score} - {self.opponent_score} {self.opponent}"
-    
     def save(self, *args, **kwargs):
         is_new = self.pk is None
-        
-        # If match is being completed, set completed_at
         if self.status == 'completed' and not self.completed_at:
             self.completed_at = timezone.now()
-        
         super().save(*args, **kwargs)
-        
-        # Update team statistics only when match is completed
         if self.status == 'completed':
             team = self.team
-            # Only update if not already counted
             if is_new or self._state.adding:
                 team.matches_played += 1
-                
                 if self.team_score > self.opponent_score:
                     team.matches_won += 1
                 elif self.team_score < self.opponent_score:
                     team.matches_lost += 1
                 else:
                     team.matches_drawn += 1
-                
                 team.save()
 
 
@@ -176,9 +160,9 @@ class Player(models.Model):
         blank=True, 
         related_name='players'
     )
-    date_of_birth = models.DateField(null=True, blank=True)  # Added
-    is_active = models.BooleanField(default=True)  # Added
-    joined_at = models.DateTimeField(auto_now_add=True)  # Added
+    date_of_birth = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    joined_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         ordering = ['user__username']
@@ -213,7 +197,6 @@ class Player(models.Model):
                     self.team.current_members = self.team.players.count()
                     self.team.save()
         else:
-            # New player
             if self.team:
                 self.team.current_members = self.team.players.count() + 1
                 self.team.save()
@@ -221,13 +204,12 @@ class Player(models.Model):
         super().save(*args, **kwargs)
 
 
-# models.py
 class Trainer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    phone_number = models.CharField(max_length=15, default='')  # ← Add default
+    phone_number = models.CharField(max_length=15, default='')
     location = models.CharField(max_length=100, default="Location not provided")
     specialization = models.CharField(max_length=100, default="General")
-    experience_years = models.IntegerField(validators=[MinValueValidator(0)], default=0)  # ← Add default
+    experience_years = models.IntegerField(validators=[MinValueValidator(0)], default=0)
     certificate = models.FileField(
         upload_to='trainer_certificates/',
         validators=[FileExtensionValidator(allowed_extensions=['pdf'])],
@@ -252,16 +234,6 @@ class Trainer(models.Model):
     @property
     def full_name(self):
         return self.user.get_full_name() or self.user.username
-    
-    @property
-    def certificate_url(self):
-        if self.certificate:
-            return self.certificate.url
-        return None
-    
-    @property
-    def is_experienced(self):
-        return self.experience_years >= 5
 
 
 class TournamentOrganiser(models.Model):
@@ -269,28 +241,143 @@ class TournamentOrganiser(models.Model):
     organisation_name = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15)
     location = models.CharField(max_length=100, default="Location not provided")
-    is_verified = models.BooleanField(default=False)  # Added
+    is_verified = models.BooleanField(default=False)
     verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='verified_organisers')
-    verified_at = models.DateTimeField(null=True, blank=True)  # Added
-    created_at = models.DateTimeField(auto_now_add=True)  # Added
+    verified_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         ordering = ['organisation_name']
     
     def __str__(self):
         return f"{self.organisation_name} - {self.user.username}"
+
+
+# ========== TOURNAMENT MODELS ==========
+
+class Tournament(models.Model):
+    """A tournament event that teams can apply to participate in"""
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('open', 'Open for Applications'),
+        ('closed', 'Closed'),
+        ('ongoing', 'Ongoing'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    name = models.CharField(max_length=200)
+    sport_type = models.CharField(max_length=100, help_text="e.g., Football, Basketball, Tennis")
+    location = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    
+    # Dates
+    start_date = models.DateField()
+    end_date = models.DateField()
+    application_deadline = models.DateField()
+    
+    # Capacity
+    max_teams = models.IntegerField(default=8, validators=[MinValueValidator(2)])
+    min_teams = models.IntegerField(default=2, validators=[MinValueValidator(2)])
+    
+    # Status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    
+    # Organiser
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_tournaments')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.name} - {self.sport_type}"
     
     @property
-    def full_name(self):
-        return self.user.get_full_name() or self.user.username
+    def accepted_teams_count(self):
+        return self.applications.filter(status='approved').count()
     
-    def save(self, *args, **kwargs):
-        if self.is_verified and not self.verified_at:
-            self.verified_at = timezone.now()
-        super().save(*args, **kwargs)
+    @property
+    def pending_teams_count(self):
+        return self.applications.filter(status='pending').count()
+    
+    @property
+    def total_applications_count(self):
+        return self.applications.count()
+    
+    @property
+    def spots_remaining(self):
+        return self.max_teams - self.accepted_teams_count
+    
+    @property
+    def is_full(self):
+        return self.accepted_teams_count >= self.max_teams
+    
+    @property
+    def can_apply(self):
+        """Check if teams can still apply"""
+        from django.utils import timezone
+        return (self.status == 'open' and 
+                not self.is_full and 
+                timezone.now().date() <= self.application_deadline)
+    
+    def update_status(self):
+        """Auto-update status based on conditions"""
+        from django.utils import timezone
+        today = timezone.now().date()
+        
+        if self.accepted_teams_count >= self.max_teams:
+            self.status = 'closed'
+        elif self.application_deadline < today and self.status == 'open':
+            self.status = 'closed'
+        elif self.start_date <= today <= self.end_date and self.status == 'closed':
+            self.status = 'ongoing'
+        elif self.end_date < today and self.status == 'ongoing':
+            self.status = 'completed'
+        self.save()
+
+
+class TournamentApplication(models.Model):
+    """Team application to join a tournament"""
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('declined', 'Declined'),
+    ]
+    
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='applications')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='tournament_applications')
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='tournament_applications')
+    reason = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    applied_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_notes = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-applied_at']
+        unique_together = ['tournament', 'team']
+    
+    def __str__(self):
+        return f"{self.team.team_name} - {self.tournament.name} ({self.status})"
+    
+    def approve(self):
+        self.status = 'approved'
+        self.reviewed_at = timezone.now()
+        self.save()
+        self.tournament.update_status()
+    
+    def decline(self, notes=None):
+        self.status = 'declined'
+        self.reviewed_at = timezone.now()
+        if notes:
+            self.review_notes = notes
+        self.save()
 
 
 class TournamentSchedule(models.Model):
+    """General match schedule (public timetable)"""
     STATUS_CHOICES = [
         ('scheduled', 'Scheduled'),
         ('ongoing', 'Ongoing'),
@@ -313,8 +400,6 @@ class TournamentSchedule(models.Model):
     date = models.DateField()
     time = models.TimeField()
     location = models.CharField(max_length=200)
-    
-    # Additional fields
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
     score_team1 = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     score_team2 = models.IntegerField(default=0, validators=[MinValueValidator(0)])
@@ -326,7 +411,6 @@ class TournamentSchedule(models.Model):
         related_name='won_tournament_matches'
     )
     
-    # Tracking
     created_by = models.ForeignKey(
         User, 
         on_delete=models.SET_NULL, 
@@ -339,7 +423,7 @@ class TournamentSchedule(models.Model):
     
     class Meta:
         ordering = ['date', 'time']
-        unique_together = ['date', 'time', 'location']  # Prevent double booking
+        unique_together = ['date', 'time', 'location']
         verbose_name = "Tournament Match"
         verbose_name_plural = "Tournament Matches"
     
@@ -363,21 +447,6 @@ class TournamentSchedule(models.Model):
         return self.status == 'completed'
     
     @property
-    def match_result(self):
-        if not self.is_completed:
-            return "Match not completed yet"
-        if self.score_team1 > self.score_team2:
-            return f"{self.team1.team_name} won"
-        elif self.score_team2 > self.score_team1:
-            return f"{self.team2.team_name} won"
-        else:
-            return "Match drawn"
-    
-    @property
-    def teams_display(self):
-        return f"{self.team1.team_name} vs {self.team2.team_name}"
-    
-    @property
     def status_display(self):
         if self.is_completed:
             return "Completed"
@@ -385,15 +454,12 @@ class TournamentSchedule(models.Model):
             return "Today"
         elif self.is_upcoming:
             return "Upcoming"
-        else:
-            return self.get_status_display()
+        return self.get_status_display()
     
     def save(self, *args, **kwargs):
-        # Validate teams are different
         if self.team1 == self.team2:
             raise ValueError("A team cannot play against itself!")
         
-        # Auto-calculate winner based on scores
         if self.status == 'completed':
             if self.score_team1 > self.score_team2:
                 self.winner = self.team1
@@ -402,25 +468,19 @@ class TournamentSchedule(models.Model):
             else:
                 self.winner = None
             
-            # Set completed date if not set
             if not self.completed_at:
                 self.completed_at = timezone.now()
-            
-            # Update team statistics
             self._update_team_stats()
         
         super().save(*args, **kwargs)
     
     def _update_team_stats(self):
-        """Update team statistics when match is completed"""
         if self.status != 'completed':
             return
         
-        # Update both teams' matches played
         self.team1.matches_played += 1
         self.team2.matches_played += 1
         
-        # Update wins/losses/draws
         if self.winner == self.team1:
             self.team1.matches_won += 1
             self.team2.matches_lost += 1
@@ -431,20 +491,49 @@ class TournamentSchedule(models.Model):
             self.team1.matches_drawn += 1
             self.team2.matches_drawn += 1
         
-        # Save team stats without triggering recursion
         self.team1.save(update_fields=['matches_played', 'matches_won', 'matches_lost', 'matches_drawn'])
         self.team2.save(update_fields=['matches_played', 'matches_won', 'matches_lost', 'matches_drawn'])
 
 
+class TournamentMatch(models.Model):
+    """Matches within a specific tournament"""
+    STATUS_CHOICES = [
+        ('scheduled', 'Scheduled'),
+        ('ongoing', 'Ongoing'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+        ('postponed', 'Postponed'),
+    ]
+    
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='matches')
+    team1 = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='tournament_matches_team1')
+    team2 = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='tournament_matches_team2')
+    match_number = models.IntegerField(default=1)
+    date = models.DateField()
+    time = models.TimeField()
+    location = models.CharField(max_length=200)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
+    score_team1 = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    score_team2 = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    winner = models.ForeignKey(
+        Team, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='won_tournament_match_matches'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['date', 'time']
+    
+    def __str__(self):
+        return f"{self.tournament.name} - {self.team1.team_name} vs {self.team2.team_name}"
 
-
-
-# myfirstapp/models.py
-
-# ... your existing models (Team, Match, Player, Trainer, TournamentOrganiser, TournamentSchedule) ...
 
 # ========== CHAT MODELS ==========
-# Add these at the very end of the file
 
 class ChatRoom(models.Model):
     ROOM_TYPES = (
@@ -507,3 +596,190 @@ class MessageAttachment(models.Model):
     
     def __str__(self):
         return self.filename
+
+
+# ========== TRAINER WORKFLOW MODELS ==========
+
+class TeamJoinRequest(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('declined', 'Declined'),
+    ]
+
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='join_requests')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='join_requests')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    requested_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-requested_at']
+        unique_together = ['player', 'team']
+
+    def __str__(self):
+        return f"{self.player.full_name} requested to join {self.team.team_name}"
+
+    def accept(self):
+        """Accept the join request and add player to team"""
+        self.status = 'accepted'
+        self.responded_at = timezone.now()
+        
+        # Assign player to the team
+        self.player.team = self.team
+        self.player.save()
+        
+        # Update team's current_members count
+        self.team.current_members = self.team.players.count()
+        self.team.save()
+        
+        self.save()
+
+    def decline(self):
+        """Decline the join request"""
+        self.status = 'declined'
+        self.responded_at = timezone.now()
+        self.save()
+
+class TrainingSession(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='training_sessions')
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='training_sessions')
+    title = models.CharField(max_length=100)
+    date = models.DateField()
+    time = models.TimeField()
+    location = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['date', 'time']
+
+    def __str__(self):
+        return f"{self.title} - {self.team.team_name} on {self.date}"
+
+    @property
+    def status_display(self):
+        return dict(self.STATUS_CHOICES).get(self.status, self.status)
+
+    @property
+    def status_badge_class(self):
+        badges = {
+            'pending': 'bg-warning text-dark',
+            'in_progress': 'bg-info',
+            'completed': 'bg-success',
+            'cancelled': 'bg-danger',
+        }
+        return badges.get(self.status, 'bg-secondary')
+    
+    @property
+    def is_upcoming(self):
+        from datetime import date
+        return date.today() < self.date
+    
+    @property
+    def is_today(self):
+        from datetime import date
+        return date.today() == self.date
+    
+    @property
+    def is_past(self):
+        from datetime import date
+        return date.today() > self.date and self.status != 'completed'
+class PlayerFeedback(models.Model):
+
+    FEEDBACK_TYPES = [
+        ('Positive', 'Positive'),
+        ('Constructive', 'Constructive'),
+        ('Excellent', 'Excellent'),
+        ('Needs Improvement', 'Needs Improvement'),
+    ]
+
+    SKILL_CATEGORIES = [
+        ('Physical Performance', 'Physical Performance'),
+        ('Technical Skills', 'Technical Skills'),
+        ('Tactical Awareness', 'Tactical Awareness'),
+        ('Mental Performance', 'Mental Performance'),
+    ]
+
+    trainer = models.ForeignKey(Trainer, on_delete=models.CASCADE, related_name='given_feedback')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='feedback')
+
+    feedback_type = models.CharField(
+        max_length=30,
+        choices=FEEDBACK_TYPES,
+        default='Positive'
+    )
+
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        default=3
+    )
+
+    skill_category = models.CharField(
+        max_length=50,
+        choices=SKILL_CATEGORIES,
+        default='Physical Performance'
+    )
+
+    status = models.BooleanField(default=False)
+
+    detailed_feedback = models.TextField(default="")
+    strengths = models.TextField(blank=True, default="")
+    improvements = models.TextField(blank=True, default="")
+    goals = models.TextField(blank=True, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+    
+
+class Feedback(models.Model):
+    FEEDBACK_TYPES = [
+        ('positive', 'Positive'),
+        ('constructive', 'Constructive'),
+        ('general', 'General'),
+        ('performance_review', 'Performance Review'),
+    ]
+    
+    SKILL_CATEGORIES = [
+        ('technique', 'Technical Skills'),
+        ('tactical', 'Tactical Awareness'),
+        ('physical', 'Physical Performance'),
+        ('mental', 'Mental/Behavioral'),
+        ('teamwork', 'Teamwork & Communication'),
+    ]
+    
+    trainer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='given_feedback')
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='received_feedback')
+    feedback_type = models.CharField(max_length=50, choices=FEEDBACK_TYPES)
+    rating = models.IntegerField(
+        choices=[(1, '1 - Needs Improvement'), (2, '2 - Below Average'), 
+                 (3, '3 - Average'), (4, '4 - Good'), (5, '5 - Excellent')],
+        null=True, 
+        blank=True
+    )
+    skill_category = models.CharField(max_length=50, choices=SKILL_CATEGORIES, blank=True)
+    comment = models.TextField()
+    strengths = models.TextField(blank=True)
+    areas_for_improvement = models.TextField(blank=True)
+    goals = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_read = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Feedback from {self.trainer.username} to {self.player.user.username} - {self.created_at.date()}"

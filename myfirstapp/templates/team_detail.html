@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}{{ team.team_name }} - Team Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>Trainer Portal</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_dashboard' %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_profile' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'my_teams' %}">
+                            <i class="fas fa-users"></i> My Teams
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active text-white" href="{% url 'team_performance' %}" style="background-color: rgba(255,255,255,0.1);">
+                            <i class="fas fa-chart-line"></i> Team Performance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_development' %}">
+                            <i class="fas fa-user-graduate"></i> Player Development
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'training_sessions' %}">
+                            <i class="fas fa-dumbbell"></i> Training Sessions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'chat_list' %}">
+                            <i class="fas fa-envelope"></i> Messages
+                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="fas fa-users"></i> {{ team.team_name }}</h2>
+                <a href="{% url 'team_performance' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Performance
+                </a>
+            </div>
+
+            <!-- Team Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <h6 class="card-title">Players</h6>
+                            <p class="card-text display-6">{{ team.current_members }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h6 class="card-title">Win Rate</h6>
+                            <p class="card-text display-6">{{ team.win_rate|floatformat:0 }}%</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body">
+                            <h6 class="card-title">Matches</h6>
+                            <p class="card-text display-6">{{ team.matches_played }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-info">
+                        <div class="card-body">
+                            <h6 class="card-title">Record</h6>
+                            <p class="card-text">
+                                <span class="text-success">{{ team.matches_won }}W</span> - 
+                                <span class="text-danger">{{ team.matches_lost }}L</span> - 
+                                <span class="text-secondary">{{ team.matches_drawn }}D</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Players -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-user-friends"></i> Team Players</h5>
+                </div>
+                <div class="card-body">
+                    {% if players %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Phone</th>
+                                        <th>Location</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for player in players %}
+                                    <tr>
+                                        <td>{{ player.user.get_full_name|default:player.user.username }}</td>
+                                        <td>{{ player.phone_number }}</td>
+                                        <td>{{ player.location }}</td>
+                                        <td>
+                                            {% if player.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No players in this team yet.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Training Sessions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-dumbbell"></i> Training Sessions</h5>
+                </div>
+                <div class="card-body">
+                    {% if training_sessions %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Location</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for session in training_sessions|slice:":5" %}
+                                    <tr>
+                                        <td>{{ session.title }}</td>
+                                        <td>{{ session.date }}</td>
+                                        <td>{{ session.time }}</td>
+                                        <td>{{ session.location }}</td>
+                                        <td>
+                                            <span class="badge {{ session.status_badge_class }}">
+                                                {{ session.get_status_display }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No training sessions scheduled for this team.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Matches -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-trophy"></i> Recent Matches</h5>
+                </div>
+                <div class="card-body">
+                    {% if past_matches %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Match</th>
+                                        <th>Opponent</th>
+                                        <th>Result</th>
+                                        <th>Score</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for match in past_matches|slice:":5" %}
+                                    <tr>
+                                        <td>{{ match.name }}</td>
+                                        <td>
+                                            {% if match.team1 == team %}
+                                                {{ match.team2.team_name }}
+                                            {% else %}
+                                                {{ match.team1.team_name }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if match.winner == team %}
+                                                <span class="text-success">Win</span>
+                                            {% elif match.winner %}
+                                                <span class="text-danger">Loss</span>
+                                            {% else %}
+                                                <span class="text-secondary">Draw</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ match.score_team1 }} - {{ match.score_team2 }}
+                                        </td>
+                                        <td>{{ match.date|date:"M d, Y" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No matches played yet.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

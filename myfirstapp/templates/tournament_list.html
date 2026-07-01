@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Tournaments{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>Trainer Portal</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_dashboard' %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_profile' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'my_teams' %}">
+                            <i class="fas fa-users"></i> My Teams
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'team_performance' %}">
+                            <i class="fas fa-chart-line"></i> Team Performance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_development' %}">
+                            <i class="fas fa-user-graduate"></i> Player Development
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'training_sessions' %}">
+                            <i class="fas fa-dumbbell"></i> Training Sessions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active text-white" href="{% url 'tournament_list' %}" style="background-color: rgba(255,255,255,0.1);">
+                            <i class="fas fa-trophy"></i> Tournaments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'chat_list' %}">
+                            <i class="fas fa-envelope"></i> Messages
+                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="fas fa-trophy"></i> Tournaments</h2>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Participating Tournaments -->
+            {% if participating_tournaments %}
+            <h4 class="mt-4 text-success"><i class="fas fa-check-circle"></i> Your Teams Are Participating</h4>
+            <div class="row">
+                {% for tournament in participating_tournaments %}
+                <div class="col-md-4 mb-3">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">{{ tournament.name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Sport:</strong> {{ tournament.sport_type }}</p>
+                            <p><strong>Location:</strong> {{ tournament.location }}</p>
+                            <p><strong>Date:</strong> {{ tournament.date|date:"M d, Y" }}</p>
+                            <a href="{% url 'tournament_detail' tournament.id %}" class="btn btn-success btn-sm">View Details</a>
+                            <a href="{% url 'tournament_timetable' tournament.id %}" class="btn btn-info btn-sm">Timetable</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Applied Tournaments -->
+            {% if applied_tournaments %}
+            <h4 class="mt-4 text-warning"><i class="fas fa-clock"></i> Your Applications</h4>
+            <div class="row">
+                {% for tournament in applied_tournaments %}
+                <div class="col-md-4 mb-3">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">{{ tournament.name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Sport:</strong> {{ tournament.sport_type }}</p>
+                            <p><strong>Location:</strong> {{ tournament.location }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-warning">Pending</span>
+                            </p>
+                            <a href="{% url 'tournament_detail' tournament.id %}" class="btn btn-warning btn-sm">View Details</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Open Tournaments -->
+            <h4 class="mt-4 text-primary"><i class="fas fa-door-open"></i> Open Tournaments</h4>
+            <div class="row">
+                {% for tournament in open_tournaments %}
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">{{ tournament.name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Sport:</strong> {{ tournament.sport_type }}</p>
+                            <p><strong>Location:</strong> {{ tournament.location }}</p>
+                            <p><strong>Date:</strong> {{ tournament.date|date:"M d, Y" }}</p>
+                            <p><strong>Teams:</strong> {{ tournament.accepted_teams_count }}/{{ tournament.max_teams }}</p>
+                            <p>
+                                <span class="badge bg-{% if tournament.spots_remaining > 0 %}success{% else %}danger{% endif %}">
+                                    {{ tournament.spots_remaining }} spots left
+                                </span>
+                            </p>
+                            <a href="{% url 'tournament_detail' tournament.id %}" class="btn btn-primary btn-sm">View Details</a>
+                            <a href="{% url 'tournament_timetable' tournament.id %}" class="btn btn-info btn-sm">Timetable</a>
+                            {% if tournament.spots_remaining > 0 %}
+                                <a href="{% url 'apply_to_tournament' tournament.id %}" class="btn btn-success btn-sm">Apply</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> No open tournaments available at the moment.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

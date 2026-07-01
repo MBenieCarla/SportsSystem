@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}My Team{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Player Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>Player Portal</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_dashboard' %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_profile' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active text-white" href="{% url 'my_team' %}" style="background-color: rgba(255,255,255,0.1);">
+                            <i class="fas fa-users"></i> My Team
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'tournament_list' %}">
+                            <i class="fas fa-calendar-alt"></i> Match Schedule
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'my_matches' %}">
+                            <i class="fas fa-futbol"></i> My Matches
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'team_standings' %}">
+                            <i class="fas fa-chart-line"></i> Team Standings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_stats' %}">
+                            <i class="fas fa-chart-bar"></i> My Statistics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_training_sessions' %}">
+                            <i class="fas fa-dumbbell"></i> Training Sessions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_feedback_for_players' %}">
+                            <i class="fas fa-comment-dots"></i> My Feedback
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'chat_list' %}">
+                            <i class="fas fa-envelope"></i> Messages
+                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="fas fa-users"></i> My Team</h2>
+                <span class="badge bg-success">{{ team.team_name }}</span>
+            </div>
+
+            {% if team %}
+                <!-- Team Stats -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-white bg-primary">
+                            <div class="card-body">
+                                <h6 class="card-title">Trainer</h6>
+                                <p class="card-text">{{ team.trainer.user.get_full_name|default:team.trainer.user.username }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-success">
+                            <div class="card-body">
+                                <h6 class="card-title">Location</h6>
+                                <p class="card-text">{{ team.location }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-warning">
+                            <div class="card-body">
+                                <h6 class="card-title">Members</h6>
+                                <p class="card-text">{{ team.current_members }}/{{ team.max_members }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-info">
+                            <div class="card-body">
+                                <h6 class="card-title">Status</h6>
+                                <p class="card-text">
+                                    {% if team.is_full %}
+                                        <span class="badge bg-danger">Full</span>
+                                    {% else %}
+                                        <span class="badge bg-success">{{ team.available_spots }} spots left</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Performance -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5><i class="fas fa-chart-line"></i> Team Performance</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                <h6>Matches Played</h6>
+                                <p class="display-6">{{ team.matches_played }}</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h6>Wins</h6>
+                                <p class="display-6 text-success">{{ team.matches_won }}</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h6>Losses</h6>
+                                <p class="display-6 text-danger">{{ team.matches_lost }}</p>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <h6>Win Rate</h6>
+                                <p class="display-6 text-info">{{ team.win_rate|floatformat:1 }}%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Members -->
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5><i class="fas fa-user-friends"></i> Team Members ({{ team.players.count }})</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Username</th>
+                                        <th>Joined</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for member in team.players.all %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>
+                                            <strong>{{ member.user.get_full_name|default:member.user.username }}</strong>
+                                            {% if member.user == user %}
+                                                <span class="badge bg-primary">You</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ member.joined_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            {% if member.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No members found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card mt-4">
+                    <div class="card-header bg-light">
+                        <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="{% url 'player_training_sessions' %}" class="btn btn-primary">
+                                <i class="fas fa-dumbbell"></i> View Training Sessions
+                            </a>
+                            <a href="{% url 'my_matches' %}" class="btn btn-success">
+                                <i class="fas fa-futbol"></i> View Matches
+                            </a>
+                            <a href="{% url 'tournament_list' %}" class="btn btn-info">
+                                <i class="fas fa-trophy"></i> Tournaments
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> You are not in a team yet. 
+                    <a href="{% url 'available_teams' %}" class="alert-link">Find a team to join</a>
+                </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}{{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>Trainer Portal</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_dashboard' %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_profile' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'my_teams' %}">
+                            <i class="fas fa-users"></i> My Teams
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'team_performance' %}">
+                            <i class="fas fa-chart-line"></i> Team Performance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_development' %}">
+                            <i class="fas fa-user-graduate"></i> Player Development
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'training_sessions' %}">
+                            <i class="fas fa-dumbbell"></i> Training Sessions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active text-white" href="{% url 'tournament_list' %}" style="background-color: rgba(255,255,255,0.1);">
+                            <i class="fas fa-trophy"></i> Tournaments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'chat_list' %}">
+                            <i class="fas fa-envelope"></i> Messages
+                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="fas fa-paper-plane"></i> Apply to {{ tournament.name }}</h2>
+                <a href="{% url 'tournament_detail' tournament.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+
+            <!-- Tournament Info -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Tournament Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p><strong>Sport:</strong> {{ tournament.sport_type }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Location:</strong> {{ tournament.location }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Date:</strong> {{ tournament.date|date:"M d, Y" }}</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p><strong>Teams:</strong> {{ tournament.accepted_teams_count }}/{{ tournament.max_teams }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Spots Left:</strong> {{ tournament.spots_remaining }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-success">{{ tournament.get_status_display }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Application Form -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-pen"></i> Application Form</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="team" class="form-label">Select Team</label>
+                            <select name="team" id="team" class="form-select" required>
+                                <option value="">Select a team...</option>
+                                {% for team in teams %}
+                                    <option value="{{ team.id }}">{{ team.team_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Choose which team you want to apply with.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="reason" class="form-label">Why should your team be selected?</label>
+                            <textarea name="reason" id="reason" class="form-control" rows="4" required placeholder="Explain why your team deserves to participate in this tournament..."></textarea>
+                            <div class="form-text">Provide a compelling reason for your team's selection.</div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane"></i> Submit Application
+                            </button>
+                            <a href="{% url 'tournament_detail' tournament.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

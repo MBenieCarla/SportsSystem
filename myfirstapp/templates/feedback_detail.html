@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Feedback Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar based on user role -->
+        {% if user.player %}
+        <!-- Player Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>Player Portal</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_dashboard' %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_profile' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'my_team' %}">
+                            <i class="fas fa-users"></i> My Team
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'tournament_list' %}">
+                            <i class="fas fa-calendar-alt"></i> Match Schedule
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'my_matches' %}">
+                            <i class="fas fa-futbol"></i> My Matches
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'team_standings' %}">
+                            <i class="fas fa-chart-line"></i> Team Standings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_stats' %}">
+                            <i class="fas fa-chart-bar"></i> My Statistics
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active text-white" href="{% url 'player_feedback_for_players' %}" style="background-color: rgba(255,255,255,0.1);">
+                            <i class="fas fa-comment-dots"></i> My Feedback
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'chat_list' %}">
+                            <i class="fas fa-envelope"></i> Messages
+                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        {% elif user.trainer %}
+        <!-- Trainer Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>Trainer Portal</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_dashboard' %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_profile' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'my_teams' %}">
+                            <i class="fas fa-users"></i> My Teams
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'team_performance' %}">
+                            <i class="fas fa-chart-line"></i> Team Performance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_development' %}">
+                            <i class="fas fa-user-graduate"></i> Player Development
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'training_sessions' %}">
+                            <i class="fas fa-dumbbell"></i> Training Sessions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'tournament_list' %}">
+                            <i class="fas fa-trophy"></i> Tournaments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'player_feedback_list' %}">
+                            <i class="fas fa-comment-dots"></i> My Feedback
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'chat_list' %}">
+                            <i class="fas fa-envelope"></i> Messages
+                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        {% endif %}
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="fas fa-comment-dots"></i> Feedback Details</h2>
+                <a href="{% if user.player %}{% url 'player_feedback_for_players' %}{% else %}{% url 'player_feedback_list' %}{% endif %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user"></i> 
+                            {% if user.player %}
+                                From: {{ feedback.trainer.get_full_name|default:feedback.trainer.username }}
+                            {% else %}
+                                To: {{ feedback.player.user.get_full_name|default:feedback.player.user.username }}
+                            {% endif %}
+                        </h5>
+                        <span class="badge bg-light text-dark">
+                            {{ feedback.created_at|date:"F d, Y - H:i" }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-tag"></i> Feedback Type:</strong></p>
+                            <span class="badge {% if feedback.feedback_type == 'positive' %}bg-success{% elif feedback.feedback_type == 'constructive' %}bg-warning text-dark{% elif feedback.feedback_type == 'performance_review' %}bg-info{% else %}bg-secondary{% endif %} p-2">
+                                {{ feedback.get_feedback_type_display }}
+                            </span>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-star"></i> Rating:</strong></p>
+                            {% if feedback.rating %}
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= feedback.rating %}
+                                        <i class="fas fa-star text-warning fa-2x"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-warning fa-2x"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="ms-2">({{ feedback.rating }}/5)</span>
+                            {% else %}
+                                <span class="text-muted">Not rated</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-futbol"></i> Skill Category:</strong></p>
+                            <span class="badge bg-info p-2">
+                                {{ feedback.get_skill_category_display|default:"Not specified" }}
+                            </span>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-envelope"></i> Status:</strong></p>
+                            {% if feedback.is_read %}
+                                <span class="badge bg-success">✅ Read</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">📩 Unread</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-4">
+                        <h5><i class="fas fa-comment"></i> Detailed Feedback</h5>
+                        <div class="p-3 bg-light rounded">
+                            {{ feedback.comment|linebreaks }}
+                        </div>
+                    </div>
+
+                    {% if feedback.strengths %}
+                    <div class="mb-4">
+                        <h5><i class="fas fa-thumbs-up text-success"></i> Key Strengths</h5>
+                        <div class="p-3 bg-light rounded">
+                            {{ feedback.strengths|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if feedback.areas_for_improvement %}
+                    <div class="mb-4">
+                        <h5><i class="fas fa-thumbs-down text-warning"></i> Areas for Improvement</h5>
+                        <div class="p-3 bg-light rounded">
+                            {{ feedback.areas_for_improvement|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if feedback.goals %}
+                    <div class="mb-4">
+                        <h5><i class="fas fa-bullseye text-primary"></i> Goals/Next Steps</h5>
+                        <div class="p-3 bg-light rounded">
+                            {{ feedback.goals|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between text-muted">
+                        <small>
+                            <i class="fas fa-user-tie"></i> Trainer: {{ feedback.trainer.get_full_name|default:feedback.trainer.username }}
+                        </small>
+                        <small>
+                            <i class="fas fa-clock"></i> Updated: {{ feedback.updated_at|date:"F d, Y - H:i" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            {% if user.trainer %}
+            <div class="card mt-3">
+                <div class="card-body">
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'edit_feedback' feedback.id %}" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <a href="{% url 'delete_feedback' feedback.id %}" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Delete
+                        </a>
+                        <a href="{% url 'player_feedback_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-list"></i> View All Feedback
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}

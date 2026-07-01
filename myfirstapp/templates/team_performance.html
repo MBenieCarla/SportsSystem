@@ -1,11 +1,285 @@
 {% extends "base.html" %}
-{% block title %}Team Performance{% endblock %}
+
+{% block title %}Dashboard - Trainer{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="row">
+        <!-- Trainer Sidebar -->
+<nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+    <div class="position-sticky pt-3">
+        <div class="text-center text-white mb-4">
+            <h5>Trainer Portal</h5>
+            <small class="text-muted">Welcome, {{ user.username }}</small>
+        </div>
+        
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'trainer_dashboard' %}active{% endif %}" href="{% url 'trainer_dashboard' %}">
+                    <i class="fas fa-home"></i> Home Page
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'trainer_profile' %}active{% endif %}" href="{% url 'trainer_profile' %}">
+                    <i class="fas fa-user"></i> My Profile
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'my_team' %}active{% endif %}" href="{% url 'my_teams' %}">
+                    <i class="fas fa-users"></i> My Teams
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'team_performance' %}active{% endif %}" href="{% url 'team_performance' %}">
+                    <i class="fas fa-chart-line"></i> Team Performance
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'trainer_feedback_list' %}active{% endif %}" href="{% url 'player_development' %}">
+                    <i class="fas fa-user-graduate"></i> Player Development
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'training_sessions' %}active{% endif %}" href="{% url 'training_sessions' %}">
+                    <i class="fas fa-dumbbell"></i> Training Sessions
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'tournament_list' %}active{% endif %}" href="{% url 'tournament_list' %}">
+                    <i class="fas fa-trophy"></i> Tournaments
+                </a>
+            </li>
+            <li class="nav-item">
+                 <a class="nav-link text-white {% if request.resolver_match.url_name == 'player_feedback_list' %}active{% endif %}" href="{% url 'player_feedback_list' %}">
+                       <i class="fas fa-comment-dots"></i> My Feedback
+                 </a>
+             </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'chat_list' %}active{% endif %}" href="{% url 'chat_list' %}">
+                    <i class="fas fa-envelope"></i> Messages
+                    <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                </a>
+            </li>
+            
+            <hr class="border-secondary">
+            <li class="nav-item">
+                <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                        <i class="fas fa-sign-out-alt"></i> Log Out
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+        <!-- Main Content -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-            <h1>Team Performance</h1>
-            <p>Team performance data will be displayed here.</p>
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="fas fa-chart-line"></i> Team Performance</h2>
+                <a href="{% url 'my_teams' %}" class="btn btn-primary">
+                    <i class="fas fa-users"></i> Manage Teams
+                </a>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if teams %}
+                <!-- Overall Stats -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-white bg-primary">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-users"></i> Total Teams</h6>
+                                <p class="card-text display-6">{{ teams.count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-success">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-user-friends"></i> Total Players</h6>
+                                <p class="card-text display-6">{{ total_players }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-warning">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-futbol"></i> Total Matches</h6>
+                                <p class="card-text display-6">{{ total_matches }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-info">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-trophy"></i> Overall Win Rate</h6>
+                                <p class="card-text display-6">{{ overall_win_rate|floatformat:0 }}%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Cards -->
+                <div class="row mb-4">
+                    {% for team in teams %}
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-shield-alt text-primary"></i> {{ team.team_name }}
+                                </h5>
+                                <span class="badge {% if team.win_rate >= 50 %}bg-success{% elif team.win_rate >= 30 %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ team.win_rate|floatformat:0 }}% Win Rate
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <h6>Record</h6>
+                                        <p class="mb-0">
+                                            <span class="text-success fw-bold">{{ team.matches_won }}W</span> - 
+                                            <span class="text-danger fw-bold">{{ team.matches_lost }}L</span> - 
+                                            <span class="text-secondary fw-bold">{{ team.matches_drawn }}D</span>
+                                        </p>
+                                        <small class="text-muted">{{ team.matches_played }} matches</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <h6>Players</h6>
+                                        <p class="mb-0">
+                                            <span class="fw-bold">{{ team.current_members }}</span>
+                                            <small class="text-muted">/ {{ team.max_members }}</small>
+                                        </p>
+                                        <small class="text-muted">
+                                            {% if team.is_full %}
+                                                <span class="text-danger">Full</span>
+                                            {% else %}
+                                                <span class="text-success">{{ team.available_spots }} spots left</span>
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                <!-- Recent Form -->
+                                <div class="text-center">
+                                    <h6>Recent Form</h6>
+                                    <div class="d-flex justify-content-center gap-1">
+                                        {% if team.recent_matches %}
+                                            {% for match in team.recent_matches|slice:":5" %}
+                                                <span class="badge {% if match.result == 'Win' %}bg-success{% elif match.result == 'Loss' %}bg-danger{% else %}bg-secondary{% endif %} p-2" style="font-size: 0.9rem;">
+                                                    {% if match.result == 'Win' %}W{% elif match.result == 'Loss' %}L{% else %}D{% endif %}
+                                                </span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <small class="text-muted">No matches played</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'my_teams' %}" class="btn btn-sm btn-primary flex-grow-1">
+                                        <i class="fas fa-users"></i> View Team
+                                    </a>
+                                    <a href="{% url 'training_sessions' %}" class="btn btn-sm btn-info flex-grow-1">
+                                        <i class="fas fa-dumbbell"></i> Training
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Recent Matches -->
+                {% if recent_matches %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-clock"></i> Recent Matches</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Match</th>
+                                        <th>Teams</th>
+                                        <th>Result</th>
+                                        <th>Score</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for match in recent_matches %}
+                                    <tr>
+                                        <td>{{ match.name }}</td>
+                                        <td>{{ match.team1.team_name }} vs {{ match.team2.team_name }}</td>
+                                        <td>
+                                            {% if match.status == 'completed' %}
+                                                {% if match.winner %}
+                                                    <span class="text-success">{{ match.winner.team_name }} won</span>
+                                                {% else %}
+                                                    <span class="text-secondary">Draw</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if match.status == 'completed' %}
+                                                <strong>{{ match.team1.team_name }} {{ match.score_team1 }} - {{ match.score_team2 }} {{ match.team2.team_name }}</strong>
+                                            {% else %}
+                                                <span class="text-muted">Not played yet</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ match.date|date:"M d, Y" }}</td>
+                                        <td>
+                                            <span class="badge {% if match.status == 'completed' %}bg-success{% elif match.status == 'ongoing' %}bg-warning{% elif match.status == 'scheduled' %}bg-info{% elif match.status == 'postponed' %}bg-secondary{% else %}bg-danger{% endif %}">
+                                                {{ match.get_status_display }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+            {% else %}
+                <!-- No Teams Found -->
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card shadow-sm">
+                            <div class="card-body text-center p-5">
+                                <div class="mb-4">
+                                    <i class="fas fa-users-slash fa-5x text-muted"></i>
+                                </div>
+                                <h3>No Teams Found</h3>
+                                <p class="text-muted">You haven't created any teams yet. Create a team to start tracking performance!</p>
+                                <div class="mt-4 d-flex justify-content-center gap-3 flex-wrap">
+                                    <a href="{% url 'create_team' %}" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-plus-circle"></i> Create Your First Team
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </main>
     </div>
 </div>

@@ -5,69 +5,70 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar -->
-        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
-            <div class="position-sticky pt-3">
-                <div class="text-center text-white mb-4">
-                    <h5>Trainer Portal</h5>
-                    <small class="text-muted">Welcome, {{ user.username }}</small>
-                </div>
-                
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link active text-white" href="{% url 'trainer_dashboard' %}">
-                            <i class="fas fa-home"></i> Home Page
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'trainer_profile' %}">
-                            <i class="fas fa-user"></i> My Profile
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'my_teams' %}">
-                            <i class="fas fa-users"></i> My Teams
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'trainer_schedule' %}">
-                            <i class="fas fa-calendar-alt"></i> Training Schedule
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'team_performance' %}">
-                            <i class="fas fa-chart-line"></i> Team Performance
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'player_development' %}">
-                            <i class="fas fa-user-graduate"></i> Player Development
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'training_sessions' %}">
-                            <i class="fas fa-dumbbell"></i> Training Sessions
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'chat_list' %}">
-                            <i class="fas fa-envelope"></i> Messages
-                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
-                        </a>
-                    </li>
-                    
-                    <hr class="border-secondary">
-                    <li class="nav-item">
-                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
-                                <i class="fas fa-sign-out-alt"></i> Log Out
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </nav>
+        <!-- Trainer Sidebar -->
+<nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+    <div class="position-sticky pt-3">
+        <div class="text-center text-white mb-4">
+            <h5>Trainer Portal</h5>
+            <small class="text-muted">Welcome, {{ user.username }}</small>
+        </div>
+        
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'trainer_dashboard' %}active{% endif %}" href="{% url 'trainer_dashboard' %}">
+                    <i class="fas fa-home"></i> Home Page
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'trainer_profile' %}active{% endif %}" href="{% url 'trainer_profile' %}">
+                    <i class="fas fa-user"></i> My Profile
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'my_team' %}active{% endif %}" href="{% url 'my_teams' %}">
+                    <i class="fas fa-users"></i> My Teams
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'team_performance' %}active{% endif %}" href="{% url 'team_performance' %}">
+                    <i class="fas fa-chart-line"></i> Team Performance
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'training_sessions' %}active{% endif %}" href="{% url 'training_sessions' %}">
+                    <i class="fas fa-dumbbell"></i> Training Sessions
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'tournament_list' %}active{% endif %}" href="{% url 'tournament_list' %}">
+                    <i class="fas fa-trophy"></i> Tournaments
+                </a>
+            </li>
+            <li class="nav-item">
+    <a class="nav-link text-white {% if request.resolver_match.url_name == 'player_feedback_list' %}active{% endif %}" href="{% url 'player_feedback_list' %}">
+        <i class="fas fa-user-graduate"></i> Trainer Feedback
+    </a>
+</li>
+
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'chat_list' %}active{% endif %}" href="{% url 'chat_list' %}">
+                    <i class="fas fa-envelope"></i> Messages
+                    <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                </a>
+            </li>
+            
+            <hr class="border-secondary">
+            <li class="nav-item">
+                <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                        <i class="fas fa-sign-out-alt"></i> Log Out
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</nav>
 
         <!-- Main Content -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
@@ -132,7 +133,8 @@
                                                 <strong>Matches:</strong> {{ team.matches_played }}<br>
                                                 <strong>Win Rate:</strong> {{ team.win_rate|floatformat:1 }}%
                                             </p>
-                                            <a href="{% url 'team_detail' team.id %}" class="btn btn-primary btn-sm">View Team</a>
+                                            <a href="{% url 'my_teams' %}" class="btn btn-primary btn-sm">View Team</a>
+                                            <a href="{% url 'team_detail' team.id %}" class="btn btn-info btn-sm">Details</a>
                                         </div>
                                     </div>
                                 </div>
@@ -140,9 +142,23 @@
                         </div>
                     {% else %}
                         <p class="text-muted">You are not coaching any teams yet.</p>
+                        <a href="{% url 'create_team' %}" class="btn btn-primary">Create Your First Team</a>
                     {% endif %}
                 </div>
             </div>
+
+            <!-- Pending Join Requests -->
+            {% if pending_requests_count > 0 %}
+            <div class="card mb-4">
+                <div class="card-header bg-warning">
+                    <h5><i class="fas fa-bell"></i> Pending Join Requests</h5>
+                </div>
+                <div class="card-body">
+                    <p>You have <strong>{{ pending_requests_count }}</strong> pending join request(s).</p>
+                    <a href="{% url 'join_requests' %}" class="btn btn-warning">View Requests</a>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Upcoming Training Sessions -->
             <div class="card">
@@ -156,29 +172,35 @@
                                 <thead>
                                     <tr>
                                         <th>Team</th>
+                                        <th>Title</th>
                                         <th>Date</th>
                                         <th>Time</th>
                                         <th>Location</th>
-                                        <th>Action</th>
+                                        <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for session in upcoming_sessions %}
                                     <tr>
                                         <td>{{ session.team.team_name }}</td>
+                                        <td>{{ session.title }}</td>
                                         <td>{{ session.date }}</td>
                                         <td>{{ session.time }}</td>
                                         <td>{{ session.location }}</td>
                                         <td>
-                                            <a href="#" class="btn btn-sm btn-info">Manage</a>
+                                            <span class="badge {{ session.status_badge_class }}">
+                                                {{ session.get_status_display }}
+                                            </span>
                                         </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
+                        <a href="{% url 'training_sessions' %}" class="btn btn-primary btn-sm">View All Sessions</a>
                     {% else %}
                         <p class="text-muted">No upcoming training sessions.</p>
+                        <a href="{% url 'create_training_session' %}" class="btn btn-primary btn-sm">Create Training Session</a>
                     {% endif %}
                 </div>
             </div>

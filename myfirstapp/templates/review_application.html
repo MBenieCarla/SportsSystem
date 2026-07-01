@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Review Application{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>Tournament Portal</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'tournament_organiser_dashboard' %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'organiser_details' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'manage_teams' %}">
+                            <i class="fas fa-users"></i> Manage Teams
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'manage_tournaments' %}">
+                            <i class="fas fa-trophy"></i> Tournaments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'tournament_schedule' %}">
+                            <i class="fas fa-calendar-alt"></i> Match Schedule
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'chat_list' %}">
+                            <i class="fas fa-envelope"></i> Messages
+                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="fas fa-check-circle"></i> Review Application</h2>
+                <a href="{% url 'tournament_detail' application.tournament.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Tournament
+                </a>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <!-- Application Details -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-file-alt"></i> Application Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Team:</strong> {{ application.team.team_name }}</p>
+                                    <p><strong>Trainer:</strong> {{ application.trainer.user.get_full_name|default:application.trainer.user.username }}</p>
+                                    <p><strong>Location:</strong> {{ application.team.location }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Tournament:</strong> {{ application.tournament.name }}</p>
+                                    <p><strong>Sport:</strong> {{ application.tournament.sport_type }}</p>
+                                    <p><strong>Applied:</strong> {{ application.applied_at|date:"F d, Y - H:i" }}</p>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            <p><strong>Application Reason:</strong></p>
+                            <div class="p-3 bg-light rounded">
+                                {{ application.reason|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <!-- Review Decision Form -->
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-gavel"></i> Review Decision</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST">
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Decision</label>
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" name="action" value="approve" class="btn btn-success btn-lg" 
+                                                onclick="return confirm('Approve this application?')">
+                                            <i class="fas fa-check"></i> Approve Application
+                                        </button>
+                                        <button type="submit" name="action" value="decline" class="btn btn-danger btn-lg"
+                                                onclick="return confirm('Decline this application?')">
+                                            <i class="fas fa-times"></i> Decline Application
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="review_notes" class="form-label">Review Notes (Optional)</label>
+                                    <textarea name="review_notes" id="review_notes" class="form-control" rows="3" 
+                                              placeholder="Add notes about your decision..."></textarea>
+                                </div>
+                                
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> 
+                                    This action cannot be undone.
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

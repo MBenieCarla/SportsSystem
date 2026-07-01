@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}My Feedback - Trainer{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Trainer Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>Trainer Portal</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_dashboard' %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'trainer_profile' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'my_teams' %}">
+                            <i class="fas fa-users"></i> My Teams
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'team_performance' %}">
+                            <i class="fas fa-chart-line"></i> Team Performance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'training_sessions' %}">
+                            <i class="fas fa-dumbbell"></i> Training Sessions
+                        </a>
+                    </li>
+<li class="nav-item">
+    <a class="nav-link text-white {% if request.resolver_match.url_name == 'player_feedback_list' %}active{% endif %}" href="{% url 'player_feedback_list' %}">
+        <i class="fas fa-user-graduate"></i> Trainer Feedback
+    </a>
+</li>
+
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'tournament_list' %}">
+                            <i class="fas fa-trophy"></i> Tournaments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'chat_list' %}">
+                            <i class="fas fa-envelope"></i> Messages
+                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="fas fa-comment-dots"></i> Trainer Feedback</h2>
+                <a href="{% url 'send_player_feedback' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Send New Feedback
+                </a>
+            </div>
+
+            <!-- Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Feedback</h5>
+                            <p class="card-text display-6">{{ total_feedback }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h5 class="card-title">Average Rating</h5>
+                            <p class="card-text display-6">{{ average_rating|floatformat:1|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body">
+                            <h5 class="card-title">Unread</h5>
+                            <p class="card-text display-6">{{ unread_count|default:"0" }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-info">
+                        <div class="card-body">
+                            <h5 class="card-title">Read</h5>
+                            <p class="card-text display-6">{{ total_feedback|add:unread_count|default:"0" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if feedback_list %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Player</th>
+                            <th>Type</th>
+                            <th>Rating</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for feedback in feedback_list %}
+                        <tr>
+                            <td>
+                                <strong>{{ feedback.player.user.get_full_name|default:feedback.player.user.username }}</strong>
+                                <br>
+                                <small class="text-muted">{{ feedback.player.team.team_name|default:"No Team" }}</small>
+                            </td>
+                            <td>
+                                <span class="badge {% if feedback.feedback_type == 'positive' %}bg-success{% elif feedback.feedback_type == 'constructive' %}bg-warning text-dark{% elif feedback.feedback_type == 'performance_review' %}bg-info{% else %}bg-secondary{% endif %}">
+                                    {{ feedback.get_feedback_type_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if feedback.rating %}
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= feedback.rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="ms-1 small">({{ feedback.rating }})</span>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ feedback.get_skill_category_display|default:"N/A" }}</td>
+                            <td>{{ feedback.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                {% if feedback.is_read %}
+                                    <span class="badge bg-success">✅ Read</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">📩 Unread</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'player_feedback_detail' feedback.id %}" class="btn btn-info" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'edit_feedback' feedback.id %}" class="btn btn-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'delete_feedback' feedback.id %}" class="btn btn-danger" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> You haven't sent any feedback yet.
+                <a href="{% url 'player_development' %}" class="btn btn-primary">
+    <i class="fas fa-plus"></i> Send New Feedback
+</a>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}

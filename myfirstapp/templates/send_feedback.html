@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Send Player Feedback{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="fas fa-comment-medical"></i> Send Player Feedback</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Total Players</h5>
+                                    <h2 class="text-primary">{{ total_players }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h5>Pending Feedback</h5>
+                                    <h2 class="text-warning">{{ pending_feedback }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feedback Form -->
+                    <form method="POST" action="{% url 'send_player_feedback' %}">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <div class="form-group mb-3">
+                            <label for="{{ form.player.id_for_label }}" class="font-weight-bold">
+                                <i class="fas fa-user"></i> Select Player
+                            </label>
+                            {{ form.player }}
+                            {% if form.player.errors %}
+                                <div class="text-danger small">{{ form.player.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="{{ form.feedback_type.id_for_label }}" class="font-weight-bold">
+                                <i class="fas fa-tag"></i> Feedback Type
+                            </label>
+                            {{ form.feedback_type }}
+                            {% if form.feedback_type.errors %}
+                                <div class="text-danger small">{{ form.feedback_type.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="{{ form.rating.id_for_label }}" class="font-weight-bold">
+                                <i class="fas fa-star"></i> Rating (1-5)
+                            </label>
+                            {{ form.rating }}
+                            {% if form.rating.errors %}
+                                <div class="text-danger small">{{ form.rating.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent
+                            </small>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="{{ form.comments.id_for_label }}" class="font-weight-bold">
+                                <i class="fas fa-comment"></i> Comments
+                            </label>
+                            {{ form.comments }}
+                            {% if form.comments.errors %}
+                                <div class="text-danger small">{{ form.comments.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Provide detailed feedback to help the player improve.
+                            </small>
+                        </div>
+
+                        <div class="form-group text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="fas fa-paper-plane"></i> Send Feedback
+                            </button>
+                            <a href="{% url 'player_feedback_list' %}" class="btn btn-secondary btn-lg px-4 ml-2">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Tips -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5><i class="fas fa-lightbulb"></i> Feedback Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check-circle text-success"></i> Be specific and constructive</li>
+                        <li><i class="fas fa-check-circle text-success"></i> Focus on performance, not personality</li>
+                        <li><i class="fas fa-check-circle text-success"></i> Provide actionable suggestions for improvement</li>
+                        <li><i class="fas fa-check-circle text-success"></i> Acknowledge strengths and achievements</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control {
+        border-radius: 8px;
+        padding: 10px 15px;
+    }
+    
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    select.form-control {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 15px center;
+        background-size: 12px;
+        padding-right: 40px;
+    }
+    
+    .card {
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+    
+    .btn {
+        border-radius: 8px;
+        padding: 10px 25px;
+    }
+    
+    textarea.form-control {
+        resize: vertical;
+        min-height: 120px;
+    }
+</style>
+{% endblock %}

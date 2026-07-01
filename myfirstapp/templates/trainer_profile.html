@@ -1,78 +1,78 @@
 {% extends "base.html" %}
 
-{% block title %}My Profile - Trainer{% endblock %}
+{% block title %}Dashboard - Trainer{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar -->
-        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
-            <div class="position-sticky pt-3">
-                <div class="text-center text-white mb-4">
-                    <h5>Trainer Portal</h5>
-                    <small class="text-muted">Welcome, {{ user.username }}</small>
-                </div>
-                
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'trainer_dashboard' %}">
-                            <i class="fas fa-home"></i> Home Page
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active text-white" href="{% url 'trainer_profile' %}">
-                            <i class="fas fa-user"></i> My Profile
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'my_teams' %}">
-                            <i class="fas fa-users"></i> My Teams
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'trainer_schedule' %}">
-                            <i class="fas fa-calendar-alt"></i> Training Schedule
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'team_performance' %}">
-                            <i class="fas fa-chart-line"></i> Team Performance
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'player_development' %}">
-                            <i class="fas fa-user-graduate"></i> Player Development
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'training_sessions' %}">
-                            <i class="fas fa-dumbbell"></i> Training Sessions
-                        </a>
-                    </li>
-                    
-                    <hr class="border-secondary">
-                    
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{% url 'trainer_settings' %}">
-                            <i class="fas fa-cog"></i> Settings
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
-                                <i class="fas fa-sign-out-alt"></i> Log Out
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </nav>
+        <!-- Trainer Sidebar -->
+<nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+    <div class="position-sticky pt-3">
+        <div class="text-center text-white mb-4">
+            <h5>Trainer Portal</h5>
+            <small class="text-muted">Welcome, {{ user.username }}</small>
+        </div>
+        
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'trainer_dashboard' %}active{% endif %}" href="{% url 'trainer_dashboard' %}">
+                    <i class="fas fa-home"></i> Home Page
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'trainer_profile' %}active{% endif %}" href="{% url 'trainer_profile' %}">
+                    <i class="fas fa-user"></i> My Profile
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'my_team' %}active{% endif %}" href="{% url 'my_teams' %}">
+                    <i class="fas fa-users"></i> My Teams
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'team_performance' %}active{% endif %}" href="{% url 'team_performance' %}">
+                    <i class="fas fa-chart-line"></i> Team Performance
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'training_sessions' %}active{% endif %}" href="{% url 'training_sessions' %}">
+                    <i class="fas fa-dumbbell"></i> Training Sessions
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'tournament_list' %}active{% endif %}" href="{% url 'tournament_list' %}">
+                    <i class="fas fa-trophy"></i> Tournaments
+                </a>
+            </li>
+<li class="nav-item">
+    <a class="nav-link text-white {% if request.resolver_match.url_name == 'player_feedback_list' %}active{% endif %}" href="{% url 'player_feedback_list' %}">
+        <i class="fas fa-user-graduate"></i> Trainer Feedback
+    </a>
+</li>
+            <li class="nav-item">
+                <a class="nav-link text-white {% if request.resolver_match.url_name == 'chat_list' %}active{% endif %}" href="{% url 'chat_list' %}">
+                    <i class="fas fa-envelope"></i> Messages
+                    <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                </a>
+            </li>
+            
+            <hr class="border-secondary">
+            <li class="nav-item">
+                <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                        <i class="fas fa-sign-out-alt"></i> Log Out
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</nav>
 
         <!-- Main Content -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">My Profile</h1>
+                <h1 class="h2"><i class="fas fa-user"></i> My Profile</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
                     <span class="badge bg-info">Trainer</span>
                 </div>
@@ -92,8 +92,8 @@
                 <!-- Profile Information -->
                 <div class="col-md-8">
                     <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Profile Information</h5>
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-edit"></i> Profile Information</h5>
                         </div>
                         <div class="card-body">
                             <form method="post" enctype="multipart/form-data">
@@ -128,7 +128,7 @@
                                     </label>
                                     {{ form.phone_number }}
                                     {% if form.phone_number.errors %}
-                                        <div class="invalid-feedback d-block">
+                                        <div class="text-danger">
                                             {% for error in form.phone_number.errors %}
                                                 {{ error }}
                                             {% endfor %}
@@ -143,7 +143,7 @@
                                     </label>
                                     {{ form.location }}
                                     {% if form.location.errors %}
-                                        <div class="invalid-feedback d-block">
+                                        <div class="text-danger">
                                             {% for error in form.location.errors %}
                                                 {{ error }}
                                             {% endfor %}
@@ -158,7 +158,7 @@
                                     </label>
                                     {{ form.specialization }}
                                     {% if form.specialization.errors %}
-                                        <div class="invalid-feedback d-block">
+                                        <div class="text-danger">
                                             {% for error in form.specialization.errors %}
                                                 {{ error }}
                                             {% endfor %}
@@ -173,7 +173,7 @@
                                     </label>
                                     {{ form.experience_years }}
                                     {% if form.experience_years.errors %}
-                                        <div class="invalid-feedback d-block">
+                                        <div class="text-danger">
                                             {% for error in form.experience_years.errors %}
                                                 {{ error }}
                                             {% endfor %}
@@ -188,7 +188,7 @@
                                     </label>
                                     {{ form.certificate }}
                                     {% if form.certificate.errors %}
-                                        <div class="invalid-feedback d-block">
+                                        <div class="text-danger">
                                             {% for error in form.certificate.errors %}
                                                 {{ error }}
                                             {% endfor %}
@@ -199,7 +199,7 @@
                                             <span class="text-success">
                                                 <i class="fas fa-check-circle"></i> Current certificate: 
                                                 <a href="{{ trainer.certificate.url }}" target="_blank">
-                                                    {{ trainer.certificate.name|cut:"trainer_certificates/" }}
+                                                    <i class="fas fa-file-pdf"></i> {{ trainer.certificate.name|cut:"trainer_certificates/" }}
                                                 </a>
                                             </span>
                                         </div>
@@ -208,19 +208,24 @@
                                     {% endif %}
                                 </div>
                                 
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> Update Profile
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Update Profile
+                                    </button>
+                                    <a href="{% url 'trainer_dashboard' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                                    </a>
+                                </div>
                             </form>
                         </div>
                     </div>
                 </div>
 
-                <!-- Account Information & Statistics (Merged) -->
+                <!-- Account Information & Statistics -->
                 <div class="col-md-4">
                     <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Account Overview</h5>
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Account Overview</h5>
                         </div>
                         <div class="card-body">
                             <ul class="list-group list-group-flush">
@@ -270,6 +275,12 @@
                                 </li>
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">Feedback Sent:</span>
+                                        <span class="badge bg-info">{{ feedback_count|default:"0" }}</span>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
                                         <span class="fw-bold">Experience:</span>
                                         <span>{{ trainer.experience_years|default:"0" }} years</span>
                                     </div>
@@ -299,7 +310,7 @@
                                             {% if trainer.is_verified %}
                                                 <span class="badge bg-success">✅ Verified</span>
                                             {% else %}
-                                                <span class="badge bg-warning">⏳ Pending</span>
+                                                <span class="badge bg-warning text-dark">⏳ Pending</span>
                                             {% endif %}
                                         </span>
                                     </div>

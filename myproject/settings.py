@@ -117,9 +117,12 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Authentication settings
+LOGIN_REDIRECT_URL = 'home'  # Redirect to home after login
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'home' 
 LOGOUT_REDIRECT_URL = 'login'
 
+# Login URL
+LOGIN_URL = 'login'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

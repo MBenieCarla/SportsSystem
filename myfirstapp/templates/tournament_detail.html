@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Tournament Organiser Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar" style="min-height: 100vh;">
+            <div class="position-sticky pt-3">
+                <div class="text-center text-white mb-4">
+                    <h5>Tournament Portal</h5>
+                    <small class="text-muted">Welcome, {{ user.username }}</small>
+                </div>
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active text-white" href="{% url 'tournament_organiser_dashboard' %}">
+                            <i class="fas fa-home"></i> Home Page
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'organiser_details' %}">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'manage_tournaments' %}">
+                            <i class="fas fa-trophy"></i> Tournaments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'tournament_schedule' %}">
+                            <i class="fas fa-calendar-alt"></i> Match Schedule
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="{% url 'chat_list' %}">
+                            <i class="fas fa-envelope"></i> Messages
+                            <span id="unread-badge" class="badge bg-danger" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    
+                    <hr class="border-secondary">
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger bg-transparent border-0" style="cursor: pointer;">
+                                <i class="fas fa-sign-out-alt"></i> Log Out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h2><i class="fas fa-trophy"></i> {{ tournament.name }}</h2>
+                <a href="{% url 'manage_tournaments' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+
+            <!-- Tournament Info -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Tournament Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Sport Type:</strong> {{ tournament.sport_type }}</p>
+                            <p><strong>Location:</strong> {{ tournament.location }}</p>
+                            <p><strong>Start Date:</strong> {{ tournament.start_date|date:"F d, Y" }}</p>
+                            <p><strong>End Date:</strong> {{ tournament.end_date|date:"F d, Y" }}</p>
+                            {% if tournament.description %}
+                            <p><strong>Description:</strong></p>
+                            <div class="p-2 bg-light rounded">
+                                {{ tournament.description|linebreaks }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-{% if tournament.status == 'open' %}success{% elif tournament.status == 'draft' %}secondary{% elif tournament.status == 'closed' %}warning{% elif tournament.status == 'ongoing' %}info{% elif tournament.status == 'completed' %}primary{% else %}danger{% endif %}">
+                                    {{ tournament.get_status_display }}
+                                </span>
+                            </p>
+                            <p><strong>Teams:</strong> {{ tournament.accepted_teams_count }}/{{ tournament.max_teams }}</p>
+                            <p><strong>Spots Remaining:</strong> {{ tournament.spots_remaining }}</p>
+                            <p><strong>Application Deadline:</strong> {{ tournament.application_deadline|date:"F d, Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Applications with Status Update -->
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Applications</h5>
+                </div>
+                <div class="card-body">
+                    {% if tournament.applications.all %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Team</th>
+                                        <th>Trainer</th>
+                                        <th>Reason</th>
+                                        <th>Status</th>
+                                        <th>Applied</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for application in tournament.applications.all %}
+                                    <tr>
+                                        <td><strong>{{ application.team.team_name }}</strong></td>
+                                        <td>{{ application.trainer.user.get_full_name|default:application.trainer.user.username }}</td>
+                                        <td>{{ application.reason|truncatechars:50 }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if application.status == 'pending' %}warning{% elif application.status == 'approved' %}success{% elif application.status == 'declined' %}danger{% else %}secondary{% endif %}">
+                                                {{ application.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ application.applied_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <!-- Status Update Form -->
+                                            <form method="POST" action="{% url 'update_application_status' application.id %}" class="d-flex gap-1 align-items-center">
+                                                {% csrf_token %}
+                                                <select name="status" class="form-select form-select-sm" style="width: auto;">
+                                                    <option value="pending" {% if application.status == 'pending' %}selected{% endif %}>⏳ Pending</option>
+                                                    <option value="approved" {% if application.status == 'approved' %}selected{% endif %}>✅ Approve</option>
+                                                    <option value="declined" {% if application.status == 'declined' %}selected{% endif %}>❌ Decline</option>
+                                                </select>
+                                                <button type="submit" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                            <!-- View Button -->
+                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#appModal{{ application.id }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <!-- View Modal -->
+                                    <div class="modal fade" id="appModal{{ application.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Application Details</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p><strong>Team:</strong> {{ application.team.team_name }}</p>
+                                                    <p><strong>Trainer:</strong> {{ application.trainer.user.get_full_name|default:application.trainer.user.username }}</p>
+                                                    <p><strong>Status:</strong> 
+                                                        <span class="badge bg-{% if application.status == 'pending' %}warning{% elif application.status == 'approved' %}success{% elif application.status == 'declined' %}danger{% else %}secondary{% endif %}">
+                                                            {{ application.get_status_display }}
+                                                        </span>
+                                                    </p>
+                                                    <p><strong>Reason:</strong></p>
+                                                    <div class="p-3 bg-light rounded">
+                                                        {{ application.reason|linebreaks }}
+                                                    </div>
+                                                    {% if application.review_notes %}
+                                                        <p><strong>Review Notes:</strong></p>
+                                                        <div class="p-3 bg-light rounded">
+                                                            {{ application.review_notes|linebreaks }}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No applications yet.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'tournament_schedule' %}" class="btn btn-primary">
+                            <i class="fas fa-calendar-alt"></i> View Schedule
+                        </a>
+                        <a href="{% url 'manage_tournaments' %}" class="btn btn-secondary">
+                            <i class="fas fa-trophy"></i> Manage Tournaments
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
