@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tournament Schedule - Community Sports{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #1B2A4A;">Tournament Schedule</h1>
+    
+    <a href="{% url 'core:player_tournaments' %}" style="display: inline-block; margin-bottom: 1.5rem; background: #6c757d; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+
+    {% if tournaments %}
+        {% for tournament in tournaments %}
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-trophy" style="color: var(--navy-blue);"></i>
+                    {{ tournament.title }}
+                    <span style="font-size: 0.875rem; color: var(--gray-500); margin-left: 1rem;">
+                        {{ tournament.sport_type }} | {{ tournament.location }}
+                    </span>
+                    <span class="badge badge-{{ tournament.status }}" style="margin-left: 1rem;">
+                        {{ tournament.get_status_display }}
+                    </span>
+                    {% if user.user_type == 'trainer' %}
+                        {% if tournament.id in applied_tournament_ids %}
+                            <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; margin-left: 0.5rem;">
+                                ✅ Applied
+                            </span>
+                        {% else %}
+                            <a href="{% url 'core:tournament_list_for_trainer' %}" style="background: #1B2A4A; color: white; padding: 0.25rem 0.75rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem;">
+                                Apply Now
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem; padding: 0.5rem; background: var(--gray-50); border-radius: 4px;">
+                <div><strong>Start:</strong> {{ tournament.start_date|date:"M d, Y" }}</div>
+                <div><strong>End:</strong> {{ tournament.end_date|date:"M d, Y" }}</div>
+                <div><strong>Teams:</strong> {{ tournament.get_team_count }}/{{ tournament.max_teams }}</div>
+            </div>
+
+            <h4 style="margin-bottom: 0.75rem; color: var(--gray-700);">Match Schedule</h4>
+            
+            {% with tournament.matches.all|dictsort:"date" as match_list %}
+                {% if match_list %}
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Home Team</th>
+                                    <th>Away Team</th>
+                                    <th>Location</th>
+                                    <th>Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for match in match_list %}
+                                <tr>
+                                    <td>{{ match.date|date:"M d, Y" }}</td>
+                                    <td>{{ match.time|time:"g:i A" }}</td>
+                                    <td>{{ match.team_home.name }}</td>
+                                    <td>{{ match.team_away.name }}</td>
+                                    <td>{{ match.location }}</td>
+                                    <td>
+                                        {% if match.is_played %}
+                                            <strong>{{ match.score_home }} - {{ match.score_away }}</strong>
+                                        {% else %}
+                                            <span style="color: var(--gray-500);">Not Played</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p style="color: var(--gray-500); text-align: center; padding: 1rem;">
+                        No matches scheduled yet.
+                    </p>
+                {% endif %}
+            {% endwith %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="card" style="text-align: center; padding: 2rem;">
+            <i class="fas fa-calendar-times" style="font-size: 3rem; color: var(--gray-300);"></i>
+            <h3 style="color: var(--gray-500);">No Tournaments Available</h3>
+            <p style="color: var(--gray-500);">There are no tournaments scheduled at the moment.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

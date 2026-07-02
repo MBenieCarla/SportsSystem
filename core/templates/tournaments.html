@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Tournaments - Community Sports{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h1 style="color: var(--navy-blue);">
+            <i class="fas fa-trophy"></i> My Tournaments
+        </h1>
+        <a href="{% url 'accounts:player_dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- My Tournaments -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-trophy" style="color: var(--navy-blue);"></i>
+                My Team's Tournaments
+            </div>
+        </div>
+        
+        {% if my_tournaments %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Tournament</th>
+                            <th>Sport</th>
+                            <th>Location</th>
+                            <th>Start Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tournament in my_tournaments %}
+                        <tr>
+                            <td><strong>{{ tournament.title }}</strong></td>
+                            <td>{{ tournament.sport_type }}</td>
+                            <td>{{ tournament.location }}</td>
+                            <td>{{ tournament.start_date|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="badge badge-{{ tournament.status }}">
+                                    {{ tournament.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'core:player_tournament_schedule' %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-calendar"></i> View Schedule
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 2rem;">
+                <i class="fas fa-trophy" style="font-size: 3rem; color: var(--gray-300);"></i>
+                <h3 style="color: var(--gray-500); margin-top: 1rem;">No Tournaments Yet</h3>
+                <p style="color: var(--gray-500);">Your team is not registered in any tournaments.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- All Upcoming Tournaments -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fas fa-calendar-alt" style="color: var(--navy-blue);"></i>
+                All Upcoming Tournaments
+            </div>
+        </div>
+        
+        {% if all_upcoming_tournaments %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Tournament</th>
+                            <th>Sport</th>
+                            <th>Location</th>
+                            <th>Start Date</th>
+                            <th>Teams</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tournament in all_upcoming_tournaments %}
+                        <tr>
+                            <td><strong>{{ tournament.title }}</strong></td>
+                            <td>{{ tournament.sport_type }}</td>
+                            <td>{{ tournament.location }}</td>
+                            <td>{{ tournament.start_date|date:"M d, Y" }}</td>
+                            <td>{{ tournament.get_team_count }}/{{ tournament.max_teams }}</td>
+                            <td>
+                                <span class="badge badge-{{ tournament.status }}">
+                                    {{ tournament.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 2rem;">
+                <i class="fas fa-calendar-times" style="font-size: 3rem; color: var(--gray-300);"></i>
+                <h3 style="color: var(--gray-500); margin-top: 1rem;">No Upcoming Tournaments</h3>
+                <p style="color: var(--gray-500);">Check back later for new tournaments.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

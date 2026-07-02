@@ -1,0 +1,124 @@
+{% extends 'base.html' %}  
+{% load static %}
+
+{% block title %}Register - Community Sports{% endblock %}
+
+{% block extra_css %}
+<style>
+    .team-field { display: none; }
+    .team-field.show { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="background: #1B2A4A; padding: 2rem;">
+    <div style="background: white; max-width: 500px; margin: 0 auto; padding: 2rem; border-radius: 12px;">
+
+        <h1 style="text-align: center; color: #1B2A4A;">🏃 Community Sports</h1>
+        <h2 style="text-align: center; color: #1B2A4A;">Create Account</h2>
+
+        <!-- Simple Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div style="background: #d4edda; color: #155724; padding: 0.75rem; border-radius: 4px; margin-bottom: 0.5rem; border: 1px solid #c3e6cb;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div style="margin-bottom: 0.8rem;">
+                <label style="display: block; font-weight: bold;">Username *</label>
+                {{ form.username }}
+            </div>
+            
+            <div style="margin-bottom: 0.8rem;">
+                <label style="display: block; font-weight: bold;">Email *</label>
+                {{ form.email }}
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+                <div>
+                    <label style="display: block; font-weight: bold;">First Name</label>
+                    {{ form.first_name }}
+                </div>
+                <div>
+                    <label style="display: block; font-weight: bold;">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+            </div>
+            
+            <div style="margin: 0.8rem 0;">
+                <label style="display: block; font-weight: bold;">Register as: *</label>
+                {{ form.user_type }}
+            </div>
+            
+            <!-- Team Dropdown -->
+            <div class="team-field" id="teamField">
+                <label style="display: block; font-weight: bold;">Select a team to join</label>
+                {{ form.team }}
+                <small style="color: #6c757d;">Your request will be sent to the trainer.</small>
+            </div>
+            
+            <div style="margin-bottom: 0.8rem;">
+                <label style="display: block; font-weight: bold;">Phone</label>
+                {{ form.phone_number }}
+            </div>
+            
+            <div style="margin-bottom: 0.8rem;">
+                <label style="display: block; font-weight: bold;">Location</label>
+                {{ form.location }}
+            </div>
+            
+            <div style="margin-bottom: 0.8rem;">
+                <label style="display: block; font-weight: bold;">Date of Birth</label>
+                {{ form.date_of_birth }}
+            </div>
+            
+            <div style="margin-bottom: 0.8rem;">
+                <label style="display: block; font-weight: bold;">Password *</label>
+                {{ form.password1 }}
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: bold;">Confirm Password *</label>
+                {{ form.password2 }}
+            </div>
+            
+            <button type="submit" style="width: 100%; background: #1B2A4A; color: white; padding: 0.7rem; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer;">
+                Register
+            </button>
+        </form>
+
+        <p style="text-align: center; margin-top: 1rem;">
+            Already have an account? <a href="{% url 'accounts:login' %}" style="color: #1B2A4A;">Login</a>
+        </p>
+    </div>
+</div>
+
+<script>
+    var radios = document.querySelectorAll('input[name="user_type"]');
+    var teamField = document.getElementById('teamField');
+
+    function toggle() {
+        var checked = false;
+        for (var i = 0; i < radios.length; i++) {
+            if (radios[i].checked && radios[i].value === 'player') {
+                checked = true;
+            }
+        }
+        if (checked) {
+            teamField.classList.add('show');
+        } else {
+            teamField.classList.remove('show');
+        }
+    }
+
+    for (var i = 0; i < radios.length; i++) {
+        radios[i].addEventListener('change', toggle);
+    }
+    toggle();
+</script>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Organizer Dashboard{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #1B2A4A;">Organizer Dashboard</h1>
+    <p>Welcome, {{ user.first_name|default:user.username }}!</p>
+    
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin: 1.5rem 0;">
+        <a href="{% url 'core:create_tournament' %}" style="background: #1B2A4A; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px;">+ Create Tournament</a>
+        <a href="{% url 'core:manage_tournaments' %}" style="background: #1B2A4A; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px;">Manage Tournaments</a>
+        <a href="{% url 'core:tournament_requests' %}" style="background: #1B2A4A; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px;">
+            Team Requests
+            {% if pending_requests_count > 0 %}
+                <span style="background: #dc3545; color: white; padding: 0.1rem 0.6rem; border-radius: 50%; margin-left: 0.25rem;">{{ pending_requests_count }}</span>
+            {% endif %}
+        </a>
+        <a href="{% url 'core:update_match_scores' %}" style="background: #1B2A4A; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px;">Update Scores</a>
+    </div>
+    
+    <h2 style="color: #1B2A4A;">Your Tournaments</h2>
+    {% if tournaments %}
+        {% for t in tournaments %}
+        <div style="background: white; padding: 1rem; margin-bottom: 0.5rem; border-radius: 5px; border: 1px solid #ddd;">
+            <strong>{{ t.title }}</strong>
+            <span style="float: right;">{{ t.get_status_display }}</span>
+            <br>
+            {{ t.sport_type }} | Teams: {{ t.get_team_count }}/{{ t.max_teams }}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: #6c757d;">No tournaments created yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Player Dashboard - Community Sports{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-wrapper {
+        display: flex;
+        gap: 2rem;
+        min-height: calc(100vh - 200px);
+    }
+    
+    /* Sidebar Styles */
+    .dashboard-sidebar {
+        width: 260px;
+        flex-shrink: 0;
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 1.5rem 0;
+        height: fit-content;
+        position: sticky;
+        top: 90px;
+    }
+    
+    .sidebar-header {
+        padding: 0 1.5rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        text-align: center;
+    }
+    
+    .sidebar-header .avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--navy-blue);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0 auto 0.75rem;
+    }
+    
+    .sidebar-header .user-name {
+        font-weight: 600;
+        color: var(--gray-800);
+        font-size: 1.1rem;
+    }
+    
+    .sidebar-header .user-role {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+    }
+    
+    .sidebar-nav {
+        padding: 1rem 0;
+        list-style: none;
+    }
+    
+    .sidebar-nav li {
+        margin-bottom: 0.25rem;
+    }
+    
+    .sidebar-nav .nav-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        color: var(--gray-700);
+        text-decoration: none;
+        transition: all 0.3s;
+        border-left: 3px solid transparent;
+        font-size: 0.95rem;
+    }
+    
+    .sidebar-nav .nav-item:hover {
+        background: var(--gray-50);
+        color: var(--navy-blue);
+        border-left-color: var(--navy-blue);
+    }
+    
+    .sidebar-nav .nav-item.active {
+        background: var(--gray-50);
+        color: var(--navy-blue);
+        border-left-color: var(--navy-blue);
+        font-weight: 600;
+    }
+    
+    .sidebar-nav .nav-item .icon {
+        width: 24px;
+        margin-right: 0.75rem;
+        text-align: center;
+        font-size: 1.1rem;
+    }
+    
+    .sidebar-nav .nav-divider {
+        border-top: 1px solid var(--gray-200);
+        margin: 0.75rem 1.5rem;
+    }
+    
+    .sidebar-nav .nav-label {
+        padding: 0.5rem 1.5rem;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--gray-400);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Main Content Styles */
+    .dashboard-main {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .dashboard-main .welcome-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .dashboard-main .welcome-section h1 {
+        color: var(--navy-blue);
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .dashboard-main .welcome-section p {
+        color: var(--gray-500);
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: var(--white);
+        border-radius: 10px;
+        padding: 1.25rem;
+        border: 1px solid var(--gray-200);
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--navy-blue);
+    }
+    
+    .stat-card .stat-label {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        margin-top: 0.25rem;
+    }
+    
+    .stat-card .stat-icon {
+        font-size: 1.5rem;
+        color: var(--navy-light);
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+    
+    .quick-actions .btn {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+    }
+    
+    /* Upcoming Matches Card */
+    .matches-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .matches-list li {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .matches-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .match-info .match-teams {
+        font-weight: 500;
+        color: var(--gray-800);
+    }
+    
+    .match-info .match-details {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+    }
+    
+    .match-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .match-status.upcoming {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .match-status.ongoing {
+        background: #cce5ff;
+        color: #004085;
+    }
+    
+    .match-status.completed {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .dashboard-wrapper {
+            flex-direction: column;
+        }
+        
+        .dashboard-sidebar {
+            width: 100%;
+            position: static;
+        }
+        
+        .sidebar-nav {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 0.5rem 1rem;
+            gap: 0.25rem;
+        }
+        
+        .sidebar-nav li {
+            margin-bottom: 0;
+        }
+        
+        .sidebar-nav .nav-item {
+            padding: 0.5rem 1rem;
+            border-left: none;
+            border-bottom: 2px solid transparent;
+            border-radius: 4px;
+        }
+        
+        .sidebar-nav .nav-item.active {
+            border-left: none;
+            border-bottom-color: var(--navy-blue);
+        }
+        
+        .sidebar-nav .nav-divider,
+        .sidebar-nav .nav-label {
+            display: none;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            text-align: left;
+        }
+        
+        .sidebar-header .avatar {
+            width: 50px;
+            height: 50px;
+            font-size: 1.25rem;
+            margin: 0;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .quick-actions {
+            flex-direction: column;
+        }
+        
+        .quick-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-header">
+            <div class="avatar">
+                {{ user.username|first|upper }}
+            </div>
+            <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+            <div class="user-role">Player</div>
+        </div>
+        
+        <ul class="sidebar-nav">
+            <!-- Home -->
+            <li>
+                <a href="{% url 'accounts:player_dashboard' %}" class="nav-item active">
+                    <span class="icon"><i class="fas fa-home"></i></span>
+                    Home Page
+                </a>
+            </li>
+            
+            <!-- Profile -->
+            <li>
+                <a href="{% url 'accounts:profile' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-user"></i></span>
+                    My Profile
+                </a>
+            </li>
+            
+            <!-- Team -->
+            <li>
+                <a href="{% url 'core:my_team' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-users"></i></span>
+                    My Team
+                </a>
+            </li>
+            
+            <li class="nav-divider"></li>
+            
+            <!-- Tournaments Section -->
+            <li class="nav-label">Tournaments</li>
+            <li>
+                <a href="{% url 'core:player_tournaments' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-trophy"></i></span>
+                    Tournament Schedule
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'core:player_trainings' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-calendar-alt"></i></span>
+                    Training Sessions
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'core:player_feedback' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-star"></i></span>
+                    My Feedback
+                </a>
+            </li>
+            
+            <li class="nav-divider"></li>
+            
+            <!-- Messages -->
+            <li>
+                <a href="{% url 'core:chat_list' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-comments"></i></span>
+                    Messages
+                    {% if unread_count > 0 %}
+                    <span class="badge badge-pending" style="margin-left: auto;">{{ unread_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            
+            <!-- Logout -->
+            <li>
+                <a href="{% url 'accounts:logout' %}" class="nav-item" style="color: #dc3545;">
+                    <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+                    Log Out
+                </a>
+            </li>
+        </ul>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h1><i class="fas fa-user" style="color: var(--navy-blue);"></i> Player Dashboard</h1>
+            <p>Welcome, {{ user.first_name|default:user.username }}!</p>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-futbol"></i></div>
+                <div class="stat-number">{{ matches_played }}</div>
+                <div class="stat-label">Matches Played</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-calendar-plus"></i></div>
+                <div class="stat-number">{{ upcoming_matches_count }}</div>
+                <div class="stat-label">Upcoming Matches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="stat-number">{{ win_rate }}%</div>
+                <div class="stat-label">Win Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-trophy"></i></div>
+                <div class="stat-number">{{ tournament_count }}</div>
+                <div class="stat-label">Tournaments</div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="{% url 'core:player_tournaments' %}" class="btn btn-primary">
+                <i class="fas fa-trophy"></i> View Tournaments
+            </a>
+            <a href="{% url 'core:player_trainings' %}" class="btn btn-primary">
+                <i class="fas fa-calendar-alt"></i> Training Sessions
+            </a>
+            <a href="{% url 'core:my_team' %}" class="btn btn-primary">
+                <i class="fas fa-users"></i> My Team
+            </a>
+        </div>
+        
+        <!-- Upcoming Matches -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-calendar-check" style="color: var(--navy-blue);"></i>
+                    Upcoming Matches
+                </div>
+                <a href="{% url 'core:player_tournament_schedule' %}" class="btn btn-primary btn-sm">
+                    View All
+                </a>
+            </div>
+            {% if upcoming_matches %}
+            <ul class="matches-list">
+                {% for match in upcoming_matches %}
+                <li>
+                    <div class="match-info">
+                        <div class="match-teams">
+                            {{ match.team_home.name }} vs {{ match.team_away.name }}
+                        </div>
+                        <div class="match-details">
+                            <i class="fas fa-calendar-alt"></i> {{ match.date|date:"M d, Y" }}
+                            <i class="fas fa-clock" style="margin-left: 0.75rem;"></i> {{ match.time|time:"g:i A" }}
+                            <i class="fas fa-map-marker-alt" style="margin-left: 0.75rem;"></i> {{ match.location }}
+                        </div>
+                    </div>
+                    <span class="match-status {{ match.status|default:'upcoming' }}">
+                        {{ match.get_status_display|default:"Upcoming" }}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="color: var(--gray-500); text-align: center; padding: 1.5rem;">
+                <i class="fas fa-info-circle"></i> No upcoming matches.
+            </p>
+            {% endif %}
+        </div>
+    </main>
+</div>
+{% endblock %}

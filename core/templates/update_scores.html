@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Update Scores{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #1B2A4A;">Update Match Scores</h1>
+    
+    {% if matches %}
+        {% for match in matches %}
+            {% if not match.is_played %}
+            <div style="background: white; padding: 1rem; margin-bottom: 0.5rem; border-radius: 5px; border: 1px solid #ddd;">
+                <strong>{{ match.tournament.title }}</strong>
+                <br>
+                {{ match.team_home.name }} vs {{ match.team_away.name }}
+                | {{ match.date|date:"M d, Y" }} | {{ match.time|time:"g:i A" }}
+                
+                <form method="POST" style="margin-top: 0.5rem;">
+                    {% csrf_token %}
+                    <input type="hidden" name="match_id" value="{{ match.id }}">
+                    <input type="number" name="score_home" placeholder="Home Score" required style="width: 80px; padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px;">
+                    <span>vs</span>
+                    <input type="number" name="score_away" placeholder="Away Score" required style="width: 80px; padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px;">
+                    <button type="submit" style="background: #1B2A4A; color: white; padding: 0.25rem 1rem; border: none; border-radius: 4px; cursor: pointer;">Update</button>
+                </form>
+            </div>
+            {% endif %}
+        {% empty %}
+            <p style="color: #6c757d;">No upcoming matches to update.</p>
+        {% endfor %}
+    {% else %}
+        <p style="color: #6c757d;">No matches found.</p>
+    {% endif %}
+    
+    <a href="{% url 'accounts:organizer_dashboard' %}" style="display: inline-block; margin-top: 1.5rem; background: #6c757d; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">Back</a>
+</div>
+{% endblock %}

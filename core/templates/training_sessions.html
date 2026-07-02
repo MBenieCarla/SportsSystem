@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Training Sessions{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #1B2A4A;">Training Sessions</h1>
+    
+    <a href="{% url 'core:create_training' %}" style="background: #1B2A4A; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px; display: inline-block; margin-bottom: 1rem;">+ Create Training</a>
+    
+    {% if trainings %}
+        {% for training in trainings %}
+        <div style="background: white; padding: 1rem; margin-bottom: 0.5rem; border-radius: 5px; border: 1px solid #ddd;">
+            <strong>{{ training.title }}</strong>
+            <span style="float: right;">
+                <a href="{% url 'core:edit_training' training.id %}" style="color: #1B2A4A; margin-right: 0.5rem;">Edit</a>
+                <a href="{% url 'core:delete_training' training.id %}" style="color: #dc3545;">Delete</a>
+            </span>
+            <br>
+            {{ training.team.name }} | {{ training.date|date:"M d, Y" }} | {{ training.start_time|time:"g:i A" }}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: #6c757d;">No training sessions.</p>
+    {% endif %}
+    
+    <a href="{% url 'accounts:trainer_dashboard' %}" style="display: inline-block; margin-top: 1.5rem; background: #6c757d; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">Back</a>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Tournaments - Community Sports{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #1B2A4A;">Manage Tournaments</h1>
+    
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+        <a href="{% url 'core:create_tournament' %}" style="background: #1B2A4A; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">
+            <i class="fas fa-plus"></i> New Tournament
+        </a>
+        <a href="{% url 'accounts:organizer_dashboard' %}" style="background: #6c757d; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    {% if tournaments %}
+        {% for tournament in tournaments %}
+        <div style="background: white; padding: 1.5rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #ddd;">
+            <h3 style="color: #1B2A4A; margin: 0;">{{ tournament.title }}</h3>
+            <p>{{ tournament.sport_type }} | {{ tournament.location }} | Teams: {{ tournament.get_team_count }}/{{ tournament.max_teams }}</p>
+            
+            <!-- Update Status -->
+            <form method="POST" style="display: inline; margin-right: 0.5rem;">
+                {% csrf_token %}
+                <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+                <input type="hidden" name="action" value="update_status">
+                <select name="status" style="padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="upcoming" {% if tournament.status == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                    <option value="ongoing" {% if tournament.status == 'ongoing' %}selected{% endif %}>Ongoing</option>
+                    <option value="completed" {% if tournament.status == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="cancelled" {% if tournament.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+                <button type="submit" style="background: #1B2A4A; color: white; padding: 0.25rem 1rem; border: none; border-radius: 4px; cursor: pointer;">Update</button>
+            </form>
+            
+            <!-- Add Team -->
+            <form method="POST" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+                <input type="hidden" name="action" value="add_team">
+                <select name="team_id" style="padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="">-- Select Team --</option>
+                    {% for team in all_teams %}
+                        {% if team not in tournament.teams_registered.all %}
+                            <option value="{{ team.id }}">{{ team.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <button type="submit" style="background: #28a745; color: white; padding: 0.25rem 1rem; border: none; border-radius: 4px; cursor: pointer;">Add Team</button>
+            </form>
+            
+            <!-- ✅ APPLICATIONS BUTTON - Added here -->
+            <a href="{% url 'core:manage_tournament_applications' tournament.id %}" 
+               style="background: #17a2b8; color: white; padding: 0.25rem 1rem; text-decoration: none; border-radius: 4px; margin-left: 0.5rem; display: inline-block;">
+                <i class="fas fa-users"></i> Applications
+            </a>
+            
+            <!-- Delete -->
+            <form method="POST" style="display: inline; margin-left: 0.5rem;" onsubmit="return confirm('Delete this tournament?')">
+                {% csrf_token %}
+                <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+                <input type="hidden" name="action" value="delete">
+                <button type="submit" style="background: #dc3545; color: white; padding: 0.25rem 1rem; border: none; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </form>
+            
+            <h4 style="margin-top: 1rem;">Registered Teams:</h4>
+            {% for team in tournament.teams_registered.all %}
+                <span style="background: #e9ecef; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 20px; display: inline-block;">
+                    {{ team.name }}
+                    <form method="POST" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="tournament_id" value="{{ tournament.id }}">
+                        <input type="hidden" name="team_id" value="{{ team.id }}">
+                        <input type="hidden" name="action" value="remove_team">
+                        <button type="submit" style="background: none; border: none; color: #dc3545; cursor: pointer;">×</button>
+                    </form>
+                </span>
+            {% empty %}
+                <span style="color: #6c757d;">No teams registered.</span>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="background: white; padding: 2rem; border-radius: 5px; border: 1px solid #ddd; text-align: center;">
+            <i class="fas fa-trophy" style="font-size: 3rem; color: #6c757d;"></i>
+            <h3 style="color: #6c757d;">No Tournaments Yet</h3>
+            <p style="color: #6c757d;">Create your first tournament!</p>
+            <a href="{% url 'core:create_tournament' %}" style="display: inline-block; margin-top: 1rem; background: #1B2A4A; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">
+                <i class="fas fa-plus"></i> Create Tournament
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

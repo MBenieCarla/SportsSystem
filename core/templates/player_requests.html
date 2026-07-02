@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Player Join Requests - Community Sports{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h1 style="color: var(--navy-blue);">
+            <i class="fas fa-user-plus"></i> Player Join Requests
+        </h1>
+        <a href="{% url 'accounts:trainer_dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card">
+        {% if pending_requests %}
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Team</th>
+                        <th>Message</th>
+                        <th>Date Requested</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in pending_requests %}
+                    <tr>
+                        <td>
+                            <strong>{{ request.player.get_full_name|default:request.player.username }}</strong>
+                            <br>
+                            <span style="font-size: 0.875rem; color: var(--gray-500);">
+                                {{ request.player.email }}
+                            </span>
+                        </td>
+                        <td>{{ request.team.name }}</td>
+                        <td>{{ request.message|default:"No message provided"|truncatechars:50 }}</td>
+                        <td>{{ request.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            <form method="POST" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="request_id" value="{{ request.id }}">
+                                <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 2rem;">
+            <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--gray-300);"></i>
+            <h3 style="color: var(--gray-500); margin-top: 1rem;">No Pending Requests</h3>
+            <p style="color: var(--gray-500);">All player join requests have been processed.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Training{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #1B2A4A;">{% if editing %}Edit{% else %}Create{% endif %} Training</h1>
+    
+    <form method="POST" style="background: white; padding: 1.5rem; border-radius: 5px; border: 1px solid #ddd;">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" style="background: #1B2A4A; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 4px; cursor: pointer;">Save</button>
+        <a href="{% url 'core:trainer_trainings' %}" style="margin-left: 0.5rem; background: #6c757d; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">Cancel</a>
+    </form>
+</div>
+{% endblock %}

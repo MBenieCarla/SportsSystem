@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Tournament{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #1B2A4A;">Create Tournament</h1>
+    
+    <form method="POST" style="background: white; padding: 1.5rem; border-radius: 5px; border: 1px solid #ddd;">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: bold;">Title *</label>
+            <input type="text" name="title" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: bold;">Description</label>
+            <textarea name="description" rows="3" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: bold;">Sport Type *</label>
+            <input type="text" name="sport_type" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: bold;">Start Date *</label>
+                <input type="date" name="start_date" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: bold;">End Date *</label>
+                <input type="date" name="end_date" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: bold;">Location *</label>
+            <input type="text" name="location" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: bold;">Registration Deadline *</label>
+            <input type="date" name="registration_deadline" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: bold;">Max Teams</label>
+            <input type="number" name="max_teams" value="16" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <button type="submit" style="background: #1B2A4A; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 4px; cursor: pointer;">Create Tournament</button>
+        <a href="{% url 'accounts:organizer_dashboard' %}" style="margin-left: 0.5rem; background: #6c757d; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">Cancel</a>
+    </form>
+</div>
+{% endblock %}

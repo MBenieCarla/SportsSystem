@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Team{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #1B2A4A;">My Team</h1>
+    
+    {% if teams %}
+        {% for team in teams %}
+        <div style="background: white; padding: 1.5rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #ddd;">
+            <h2 style="color: #1B2A4A; margin: 0;">{{ team.name }}</h2>
+            <p><strong>Sport:</strong> {{ team.sport_type }}</p>
+            <p><strong>Location:</strong> {{ team.location }}</p>
+            <p><strong>Trainer:</strong> {{ team.trainer.get_full_name|default:team.trainer.username }}</p>
+            <p><strong>Players:</strong> {{ team.get_player_count }}/{{ team.max_players }}</p>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: #6c757d;">You are not in any team yet.</p>
+    {% endif %}
+    
+    <a href="{% url 'accounts:player_dashboard' %}" style="display: inline-block; margin-top: 1.5rem; background: #1B2A4A; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">Back</a>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% load static %}  <!-- ← Load static files -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Community Sports{% endblock %}</title>
+    
+  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+   
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">  <!-- ← Load your CSS -->
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <a href="{% url 'core:home' %}" class="navbar-brand">
+            <i class="fas fa-running"></i> Community Sports
+        </a>
+        <div class="navbar-menu">
+            {% if user.is_authenticated %}
+                <span style="color: white;">
+                    <i class="fas fa-user"></i> {{ user.username }}
+                </span>
+                <a href="{% url 'accounts:dashboard' %}" class="navbar-link">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="{% url 'accounts:logout' %}" class="navbar-link">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="navbar-link">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+                <a href="{% url 'accounts:register' %}" class="navbar-link">
+                    <i class="fas fa-user-plus"></i> Register
+                </a>
+            {% endif %}
+        </div>
+    </nav>
+
+  
+    {% if messages %}
+    <div style="padding: 0 2rem; margin-top: 1rem;">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="dashboard-container">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

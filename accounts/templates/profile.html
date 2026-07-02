@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - Community Sports{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h1 style="color: var(--navy-blue);">
+            <i class="fas fa-user"></i> My Profile
+        </h1>
+        <a href="{% url 'accounts:player_dashboard' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card" style="max-width: 600px;">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Profile Picture -->
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="Profile Picture" 
+                         style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--navy-blue);">
+                {% else %}
+                    <div style="width: 120px; height: 120px; border-radius: 50%; background: var(--navy-blue); 
+                                color: white; display: flex; align-items: center; justify-content: center; 
+                                font-size: 3rem; font-weight: bold; margin: 0 auto;">
+                        {{ user.username|first|upper }}
+                    </div>
+                {% endif %}
+                <div style="margin-top: 0.5rem;">
+                    {{ form.profile_picture }}
+                </div>
+            </div>
+            
+            <!-- Form Fields -->
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-control" value="{{ user.username }}" disabled>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.first_name.id_for_label }}">First Name</label>
+                {{ form.first_name }}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.last_name.id_for_label }}">Last Name</label>
+                {{ form.last_name }}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.email.id_for_label }}">Email Address</label>
+                {{ form.email }}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+                {{ form.phone_number }}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="{{ form.location.id_for_label }}">Location</label>
+                {{ form.location }}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">User Type</label>
+                <input type="text" class="form-control" value="{{ user.get_user_type_display }}" disabled>
+            </div>
+            
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <a href="{% url 'accounts:player_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

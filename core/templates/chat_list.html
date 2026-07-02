@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Messages - Community Sports{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-list-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid var(--gray-200);
+        transition: background 0.2s;
+        text-decoration: none;
+        color: inherit;
+    }
+    .chat-list-item:hover {
+        background: var(--gray-100);
+    }
+    .chat-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--navy-blue);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    .chat-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .chat-info .chat-name {
+        font-weight: 600;
+        color: var(--gray-800);
+    }
+    .chat-info .chat-last-message {
+        color: var(--gray-600);
+        font-size: 0.875rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .chat-meta {
+        text-align: right;
+        flex-shrink: 0;
+        margin-left: 1rem;
+    }
+    .chat-meta .chat-time {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+    }
+    .chat-badge {
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+        margin-top: 0.25rem;
+        display: inline-block;
+        min-width: 20px;
+        text-align: center;
+    }
+    .chat-empty {
+        text-align: center;
+        padding: 3rem;
+        color: var(--gray-500);
+    }
+    .chat-empty i {
+        font-size: 3rem;
+        color: var(--gray-300);
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h1 style="color: var(--navy-blue);">
+            <i class="fas fa-comments"></i> Messages
+        </h1>
+        <a href="{% url 'core:create_chat_room' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Chat
+        </a>
+    </div>
+
+    <div class="card">
+        {% if chat_rooms %}
+            {% for room in chat_rooms %}
+            <a href="{% url 'core:chat_room' room.id %}" class="chat-list-item">
+                <!-- SIMPLE AVATAR -->
+                <div class="chat-avatar">
+                    {% if room.room_type == 'team' %}
+                        <i class="fas fa-users"></i>
+                    {% elif room.room_type == 'tournament' %}
+                        <i class="fas fa-trophy"></i>
+                    {% else %}
+                        <!-- Just show first letter of chat name -->
+                        {% for participant in room.participants.all %}
+                            {% if participant != user %}
+                                {{ participant.username|first|upper }}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                
+                <div class="chat-info">
+                    <div class="chat-name">
+                        {% if room.room_type == 'team' %}
+                            {{ room.team.name }} (Team Chat)
+                        {% elif room.room_type == 'tournament' %}
+                            {{ room.tournament.title }} (Tournament)
+                        {% else %}
+                            {% for participant in room.participants.all %}
+                                {% if participant != user %}
+                                    {{ participant.get_full_name|default:participant.username }}
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        
+                        {% if room.room_type == 'team' %}
+                            <span style="font-size: 0.75rem; color: var(--gray-500); margin-left: 0.5rem;">
+                                <i class="fas fa-users"></i> {{ room.participants.count }}
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="chat-last-message">
+                        {% with last_message=room.get_last_message %}
+                            {% if last_message %}
+                                {{ last_message.sender.username }}: {{ last_message.content|truncatechars:50 }}
+                            {% else %}
+                                No messages yet
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <div class="chat-meta">
+                    <div class="chat-time">
+                        {{ room.updated_at|timesince }} ago
+                    </div>
+                    {% if room.unread_count > 0 %}
+                        <span class="chat-badge">{{ room.unread_count }}</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="chat-empty">
+                <i class="fas fa-comment-slash"></i>
+                <h3>No Messages</h3>
+                <p>You don't have any chat conversations yet.</p>
+                <a href="{% url 'core:create_chat_room' %}" class="btn btn-primary" style="margin-top: 1rem;">
+                    <i class="fas fa-plus"></i> Start a Chat
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

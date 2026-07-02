@@ -1,0 +1,534 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Trainer Dashboard - Community Sports{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-wrapper {
+        display: flex;
+        gap: 2rem;
+        min-height: calc(100vh - 200px);
+    }
+    
+    /* Sidebar Styles */
+    .dashboard-sidebar {
+        width: 260px;
+        flex-shrink: 0;
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 1.5rem 0;
+        height: fit-content;
+        position: sticky;
+        top: 90px;
+    }
+    
+    .sidebar-header {
+        padding: 0 1.5rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        text-align: center;
+    }
+    
+    .sidebar-header .avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--navy-blue);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0 auto 0.75rem;
+    }
+    
+    .sidebar-header .user-name {
+        font-weight: 600;
+        color: var(--gray-800);
+        font-size: 1.1rem;
+    }
+    
+    .sidebar-header .user-role {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+    }
+    
+    .sidebar-nav {
+        padding: 1rem 0;
+        list-style: none;
+    }
+    
+    .sidebar-nav li {
+        margin-bottom: 0.25rem;
+    }
+    
+    .sidebar-nav .nav-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        color: var(--gray-700);
+        text-decoration: none;
+        transition: all 0.3s;
+        border-left: 3px solid transparent;
+        font-size: 0.95rem;
+    }
+    
+    .sidebar-nav .nav-item:hover {
+        background: var(--gray-50);
+        color: var(--navy-blue);
+        border-left-color: var(--navy-blue);
+    }
+    
+    .sidebar-nav .nav-item.active {
+        background: var(--gray-50);
+        color: var(--navy-blue);
+        border-left-color: var(--navy-blue);
+        font-weight: 600;
+    }
+    
+    .sidebar-nav .nav-item .icon {
+        width: 24px;
+        margin-right: 0.75rem;
+        text-align: center;
+        font-size: 1.1rem;
+    }
+    
+    .sidebar-nav .nav-divider {
+        border-top: 1px solid var(--gray-200);
+        margin: 0.75rem 1.5rem;
+    }
+    
+    .sidebar-nav .nav-label {
+        padding: 0.5rem 1.5rem;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--gray-400);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    .sidebar-nav .badge-pending {
+        background: #dc3545;
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.1rem 0.5rem;
+        border-radius: 50%;
+        margin-left: auto;
+    }
+    
+    /* Main Content Styles */
+    .dashboard-main {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .dashboard-main .welcome-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .dashboard-main .welcome-section h1 {
+        color: var(--navy-blue);
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .dashboard-main .welcome-section p {
+        color: var(--gray-500);
+    }
+    
+    /* Stats Grid - No Horizontal Layout */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: var(--white);
+        border-radius: 10px;
+        padding: 1.25rem;
+        border: 1px solid var(--gray-200);
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--navy-blue);
+    }
+    
+    .stat-card .stat-label {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        margin-top: 0.25rem;
+    }
+    
+    .stat-card .stat-icon {
+        font-size: 1.5rem;
+        color: var(--navy-light);
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+    
+    .quick-actions .btn {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+    }
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .dashboard-wrapper {
+            flex-direction: column;
+        }
+        
+        .dashboard-sidebar {
+            width: 100%;
+            position: static;
+        }
+        
+        .sidebar-nav {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 0.5rem 1rem;
+            gap: 0.25rem;
+        }
+        
+        .sidebar-nav li {
+            margin-bottom: 0;
+        }
+        
+        .sidebar-nav .nav-item {
+            padding: 0.5rem 1rem;
+            border-left: none;
+            border-bottom: 2px solid transparent;
+            border-radius: 4px;
+        }
+        
+        .sidebar-nav .nav-item.active {
+            border-left: none;
+            border-bottom-color: var(--navy-blue);
+        }
+        
+        .sidebar-nav .nav-divider,
+        .sidebar-nav .nav-label {
+            display: none;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            text-align: left;
+        }
+        
+        .sidebar-header .avatar {
+            width: 50px;
+            height: 50px;
+            font-size: 1.25rem;
+            margin: 0;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .quick-actions {
+            flex-direction: column;
+        }
+        
+        .quick-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-header">
+            <div class="avatar">
+                {{ user.username|first|upper }}
+            </div>
+            <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+            <div class="user-role">Trainer</div>
+        </div>
+        
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{% url 'accounts:trainer_dashboard' %}" class="nav-item active">
+                    <span class="icon"><i class="fas fa-home"></i></span>
+                    Home Page
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'accounts:profile' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-user"></i></span>
+                    My Profile
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'core:manage_teams' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-users"></i></span>
+                    My Teams
+                </a>
+            </li>
+            
+            <li class="nav-divider"></li>
+            
+            <li class="nav-label">Training</li>
+            <li>
+                <a href="{% url 'core:create_training' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-plus-circle"></i></span>
+                    Create Training
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'core:trainer_trainings' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-calendar-alt"></i></span>
+                    Training Sessions
+                </a>
+            </li>
+            
+            <li class="nav-divider"></li>
+            
+            <li class="nav-label">Requests</li>
+            <li>
+                <a href="{% url 'core:manage_join_requests' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-user-plus"></i></span>
+                    Join Requests
+                    {% if pending_requests_count > 0 %}
+                    <span class="badge-pending">{{ pending_requests_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            
+            <li class="nav-divider"></li>
+            
+            <li>
+                <a href="{% url 'core:chat_list' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-comments"></i></span>
+                    Messages
+                    {% if unread_count > 0 %}
+                    <span class="badge-pending">{{ unread_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            
+            <li>
+                <a href="{% url 'accounts:logout' %}" class="nav-item" style="color: #dc3545;">
+                    <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+                    Log Out
+                </a>
+            </li>
+        </ul>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h1><i class="fas fa-chalkboard-teacher" style="color: var(--navy-blue);"></i> Trainer Dashboard</h1>
+            <p>Welcome, {{ user.first_name|default:user.username }}!</p>
+        </div>
+        
+        <!-- Stats Grid - No Horizontal Layout -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-number">{{ total_players }}</div>
+                <div class="stat-label">Total Players</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-number">{{ total_teams }}</div>
+                <div class="stat-label">My Teams</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                <div class="stat-number">{{ total_trainings }}</div>
+                <div class="stat-label">Total Trainings</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-trophy"></i></div>
+                <div class="stat-number">{{ upcoming_tournaments|length }}</div>
+                <div class="stat-label">Upcoming Tournaments</div>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Left Column -->
+            <div>
+                <!-- Pending Join Requests -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-user-plus" style="color: var(--navy-blue);"></i>
+                            Pending Join Requests
+                            {% if pending_requests_count > 0 %}
+                            <span class="badge badge-pending">{{ pending_requests_count }}</span>
+                            {% endif %}
+                        </div>
+                        <a href="{% url 'core:manage_join_requests' %}" class="btn btn-primary btn-sm">Manage All</a>
+                    </div>
+                    
+                    {% if pending_requests %}
+                        {% for request in pending_requests %}
+                        <div style="background: #f8f9fa; padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 4px;">
+                            <strong>{{ request.player.username }}</strong> wants to join <strong>{{ request.team.name }}</strong>
+                            <span style="float: right;">
+                                <a href="{% url 'core:manage_join_requests' %}" style="background: #1B2A4A; color: white; padding: 0.2rem 0.8rem; text-decoration: none; border-radius: 4px; font-size: 0.8rem;">Manage</a>
+                            </span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="color: #6c757d; text-align: center; padding: 0.5rem;">No pending requests.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Upcoming Training Sessions -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-calendar-alt" style="color: var(--navy-blue);"></i>
+                            Upcoming Training Sessions
+                        </div>
+                        <a href="{% url 'core:create_training' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Create
+                        </a>
+                    </div>
+                    {% if upcoming_trainings %}
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Team</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Location</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for training in upcoming_trainings %}
+                                <tr>
+                                    <td>{{ training.title }}</td>
+                                    <td>{{ training.team.name }}</td>
+                                    <td>{{ training.date|date:"M d, Y" }}</td>
+                                    <td>{{ training.start_time|time:"g:i A" }}</td>
+                                    <td>{{ training.location }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p style="color: var(--gray-500); text-align: center; padding: 1rem;">
+                        No upcoming training sessions.
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div>
+                <!-- My Teams -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-users" style="color: var(--navy-blue);"></i>
+                            My Teams
+                        </div>
+                        <a href="{% url 'core:manage_teams' %}" class="btn btn-primary btn-sm">Manage</a>
+                    </div>
+                    {% if teams %}
+                    <ul style="list-style: none; padding: 0;">
+                        {% for team in teams %}
+                        <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--gray-200);">
+                            <strong>{{ team.name }}</strong>
+                            <span style="float: right; color: var(--gray-600);">
+                                {{ team.get_player_count }}/{{ team.max_players }}
+                            </span>
+                            <br>
+                            <span style="font-size: 0.875rem; color: var(--gray-500);">
+                                {{ team.sport_type }} - {{ team.location }}
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p style="color: var(--gray-500); text-align: center; padding: 1rem;">
+                        You haven't created any teams yet.
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Upcoming Tournaments -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-trophy" style="color: var(--navy-blue);"></i>
+                            Upcoming Tournaments
+                        </div>
+                    </div>
+                    {% if upcoming_tournaments %}
+                    <ul style="list-style: none; padding: 0;">
+                        {% for tournament in upcoming_tournaments %}
+                        <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--gray-200);">
+                            <strong>{{ tournament.title }}</strong>
+                            <br>
+                            <span style="font-size: 0.875rem; color: var(--gray-600);">
+                                {{ tournament.start_date|date:"M d, Y" }}
+                                <span class="badge badge-{{ tournament.status }}" style="float: right;">
+                                    {{ tournament.get_status_display }}
+                                </span>
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p style="color: var(--gray-500); text-align: center; padding: 1rem;">
+                        No upcoming tournaments.
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

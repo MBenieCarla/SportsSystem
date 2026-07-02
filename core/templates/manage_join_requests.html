@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Join Requests - Community Sports{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #0c2b6f;">Player Join Requests</h1>
+    
+    <a href="{% url 'accounts:trainer_dashboard' %}" style="display: inline-block; margin-bottom: 1rem; background: #6c757d; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+
+    {% if pending_requests %}
+        {% for request in pending_requests %}
+        <div style="background: white; padding: 1rem; margin-bottom: 0.5rem; border-radius: 5px; border: 1px solid #ddd;">
+            <strong>{{ request.player.username }}</strong>
+            wants to join <strong>{{ request.team.name }}</strong>
+            <br>
+            <small style="color: #6c757d;">Requested: {{ request.created_at|date:"M d, Y" }}</small>
+            <span style="float: right;">
+                <form method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="request_id" value="{{ request.id }}">
+                    <button type="submit" name="action" value="approve" style="background: #28a745; color: white; padding: 0.25rem 1rem; border: none; border-radius: 4px; cursor: pointer;">
+                        ✅ Approve
+                    </button>
+                    <button type="submit" name="action" value="reject" style="background: #dc3545; color: white; padding: 0.25rem 1rem; border: none; border-radius: 4px; cursor: pointer;">
+                        ❌ Reject
+                    </button>
+                </form>
+            </span>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="background: white; padding: 2rem; text-align: center; border-radius: 5px; border: 1px solid #ddd;">
+            <h3 style="color: #6c757d;">No Pending Requests</h3>
+            <p style="color: #6c757d;">All player requests have been processed.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

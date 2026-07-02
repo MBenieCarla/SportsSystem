@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}New Chat - Community Sports{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <h1 style="color: var(--navy-blue); margin-bottom: 1.5rem;">
+        <i class="fas fa-plus-circle"></i> New Chat
+    </h1>
+    
+    <div class="card" style="max-width: 600px;">
+        <form method="POST">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
+            <!-- Room Type -->
+            <div class="form-group">
+                <label class="form-label" for="{{ form.room_type.id_for_label }}">Chat Type</label>
+                {{ form.room_type }}
+                {% if form.room_type.errors %}
+                    <div class="alert alert-danger" style="margin-top: 0.25rem;">
+                        {{ form.room_type.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Name (for team/tournament chats) -->
+            <div class="form-group" id="nameGroup">
+                <label class="form-label" for="{{ form.name.id_for_label }}">Chat Name (Optional)</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <div class="alert alert-danger" style="margin-top: 0.25rem;">
+                        {{ form.name.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Team -->
+            <div class="form-group" id="teamGroup" style="display: none;">
+                <label class="form-label" for="{{ form.team.id_for_label }}">Select Team</label>
+                {{ form.team }}
+                {% if form.team.errors %}
+                    <div class="alert alert-danger" style="margin-top: 0.25rem;">
+                        {{ form.team.errors }}
+                    </div>
+                {% endif %}
+                <small style="color: var(--gray-500); font-size: 0.75rem;">
+                    All team members will be added to the chat automatically.
+                </small>
+            </div>
+            
+            <!-- Tournament -->
+            <div class="form-group" id="tournamentGroup" style="display: none;">
+                <label class="form-label" for="{{ form.tournament.id_for_label }}">Select Tournament</label>
+                {{ form.tournament }}
+                {% if form.tournament.errors %}
+                    <div class="alert alert-danger" style="margin-top: 0.25rem;">
+                        {{ form.tournament.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Participants -->
+            <div class="form-group">
+                <label class="form-label" for="{{ form.participants.id_for_label }}">Select Participants</label>
+                {{ form.participants }}
+                {% if form.participants.errors %}
+                    <div class="alert alert-danger" style="margin-top: 0.25rem;">
+                        {{ form.participants.errors }}
+                    </div>
+                {% endif %}
+                <small style="color: var(--gray-500); font-size: 0.75rem;">
+                    Hold Ctrl/Cmd to select multiple participants.
+                </small>
+            </div>
+            
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create Chat
+                </button>
+                <a href="{% url 'core:chat_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Show/hide fields based on room type
+    const roomType = document.getElementById('{{ form.room_type.id_for_label }}');
+    const nameGroup = document.getElementById('nameGroup');
+    const teamGroup = document.getElementById('teamGroup');
+    const tournamentGroup = document.getElementById('tournamentGroup');
+    
+    function updateFields() {
+        const type = roomType.value;
+        
+        if (type === 'team') {
+            teamGroup.style.display = 'block';
+            tournamentGroup.style.display = 'none';
+            nameGroup.style.display = 'block';
+        } else if (type === 'tournament') {
+            teamGroup.style.display = 'none';
+            tournamentGroup.style.display = 'block';
+            nameGroup.style.display = 'block';
+        } else {
+            teamGroup.style.display = 'none';
+            tournamentGroup.style.display = 'none';
+            nameGroup.style.display = 'none';
+        }
+    }
+    
+    roomType.addEventListener('change', updateFields);
+    updateFields();
+</script>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Teams - Community Sports{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 1rem;">
+
+    <!-- ===== PAGE TITLE ===== -->
+    <h1 style="color: #1B2A4A;">My Teams</h1>
+
+    <!-- ===== CREATE TEAM BUTTON ===== -->
+    <!-- Click this button to show the create team form -->
+    <button onclick="document.getElementById('createForm').style.display='block'" 
+            style="background: #1B2A4A; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 1rem;">
+        <i class="fas fa-plus"></i> Create Team
+    </button>
+
+    <!-- ===== CREATE TEAM FORM ===== -->
+    <!-- Hidden by default, shows when you click "Create Team" button -->
+    <div id="createForm" style="display: none; background: white; padding: 1.5rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #ddd;">
+
+        <h3 style="color: #1B2A4A; margin-top: 0;">Create New Team</h3>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_team">
+            
+            <!-- Form fields in a grid (2 columns) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                
+                <!-- Team Name -->
+                <div>
+                    <label style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Team Name *</label>
+                    <input type="text" name="name" required 
+                           style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                </div>
+                
+                <!-- Sport Type -->
+                <div>
+                    <label style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Sport Type *</label>
+                    <input type="text" name="sport_type" required 
+                           style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                </div>
+                
+                <!-- Location -->
+                <div>
+                    <label style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Location *</label>
+                    <input type="text" name="location" required 
+                           style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                </div>
+                
+                <!-- Max Players -->
+                <div>
+                    <label style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Max Players</label>
+                    <input type="number" name="max_players" value="20" 
+                           style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                </div>
+            </div>
+            
+            <!-- Description (full width) -->
+            <div style="margin-top: 1rem;">
+                <label style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Description</label>
+                <textarea name="description" rows="2" 
+                          style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;"></textarea>
+            </div>
+            
+            <!-- Buttons -->
+            <div style="margin-top: 1rem;">
+                <button type="submit" style="background: #1B2A4A; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-save"></i> Create Team
+                </button>
+                
+                <button type="button" onclick="document.getElementById('createForm').style.display='none'" 
+                        style="background: #6c757d; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ===== TEAMS LIST ===== -->
+    {% if teams %}
+        <!-- Loop through each team -->
+        {% for team in teams %}
+        <div style="background: white; padding: 1.5rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #ddd;">
+
+            <!-- Team Info -->
+            <h3 style="color: #1B2A4A; margin: 0;">{{ team.name }}</h3>
+            <p>
+                <strong>Sport:</strong> {{ team.sport_type }} | 
+                <strong>Location:</strong> {{ team.location }} | 
+                <strong>Players:</strong> {{ team.get_player_count }}/{{ team.max_players }}
+            </p>
+            
+            <!-- Activate/Deactivate Button -->
+            <form method="POST" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="team_id" value="{{ team.id }}">
+                <input type="hidden" name="action" value="activate">
+                <button type="submit" 
+                        style="background: {% if team.is_active %}#28a745{% else %}#6c757d{% endif %}; 
+                               color: white; padding: 0.25rem 1rem; border: none; border-radius: 4px; cursor: pointer;">
+                    {% if team.is_active %}✅ Active{% else %}⛔ Inactive{% endif %}
+                </button>
+            </form>
+
+            <!-- Players List -->
+            <h4 style="margin-top: 1rem; margin-bottom: 0.5rem;">Players:</h4>
+            
+            {% if team.players.all %}
+                <!-- Show each player with a remove button -->
+                {% for player in team.players.all %}
+                <span style="background: #e9ecef; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 20px; display: inline-block;">
+                    {{ player.username }}
+                    
+                    <!-- Remove Player Form -->
+                    <form method="POST" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="team_id" value="{{ team.id }}">
+                        <input type="hidden" name="player_id" value="{{ player.id }}">
+                        <input type="hidden" name="action" value="remove_player">
+                        <button type="submit" style="background: none; border: none; color: #dc3545; cursor: pointer;" 
+                                onclick="return confirm('Remove {{ player.username }} from {{ team.name }}?')">
+                            ×
+                        </button>
+                    </form>
+                </span>
+                {% endfor %}
+            {% else %}
+                <span style="color: #6c757d;">No players in this team yet.</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+    <!-- ===== NO TEAMS YET ===== -->
+    {% else %}
+        <div style="background: white; padding: 2rem; border-radius: 5px; border: 1px solid #ddd; text-align: center;">
+            <i class="fas fa-users" style="font-size: 3rem; color: #6c757d;"></i>
+            <h3 style="color: #6c757d;">No Teams Yet</h3>
+            <p style="color: #6c757d;">Create your first team by clicking the "Create Team" button above!</p>
+        </div>
+    {% endif %}
+
+    <!-- ===== BACK BUTTON ===== -->
+    <div style="margin-top: 1rem;">
+        <a href="{% url 'accounts:trainer_dashboard' %}" 
+           style="background: #6c757d; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

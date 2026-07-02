@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tournaments - Community Sports{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #1B2A4A;">Available Tournaments</h1>
+    
+    <a href="{% url 'accounts:trainer_dashboard' %}" style="display: inline-block; margin-bottom: 1.5rem; background: #6c757d; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+
+    {% if tournaments %}
+        {% for tournament in tournaments %}
+        <div style="background: white; padding: 1.5rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #ddd;">
+            <h3 style="color: #1B2A4A; margin: 0;">{{ tournament.title }}</h3>
+            <p>{{ tournament.sport_type }} | {{ tournament.location }} | Teams: {{ tournament.get_team_count }}/{{ tournament.max_teams }}</p>
+            <p style="font-size: 0.9rem; color: #6c757d;">
+                {{ tournament.start_date|date:"M d, Y" }} - {{ tournament.end_date|date:"M d, Y" }}
+            </p>
+            
+            <!-- Check application status -->
+            {% with status=app_status|get_item:tournament.id %}
+                {% if status == 'pending' %}
+                    <span style="background: #fff3cd; color: #856404; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">
+                        ⏳ Pending Approval
+                    </span>
+                {% elif status == 'approved' %}
+                    <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">
+                        ✅ Approved
+                    </span>
+                {% elif status == 'rejected' %}
+                    <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">
+                        ❌ Rejected
+                    </span>
+                {% else %}
+                    <form method="POST" action="{% url 'core:apply_to_tournament' tournament.id %}" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.5rem;">
+                        {% csrf_token %}
+                        <select name="team_id" required style="padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">Select Team</option>
+                            {% for team in trainer_teams %}
+                                <option value="{{ team.id }}">{{ team.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="text" name="message" placeholder="Optional message" style="padding: 0.25rem; border: 1px solid #ddd; border-radius: 4px;">
+                        <button type="submit" style="background: #1B2A4A; color: white; padding: 0.25rem 1rem; border: none; border-radius: 4px; cursor: pointer;">
+                            Apply
+                        </button>
+                    </form>
+                {% endif %}
+            {% endwith %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="background: white; padding: 2rem; border-radius: 5px; border: 1px solid #ddd; text-align: center;">
+            <i class="fas fa-trophy" style="font-size: 3rem; color: #6c757d;"></i>
+            <h3 style="color: #6c757d;">No Tournaments Available</h3>
+            <p style="color: #6c757d;">Check back later for new tournaments.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
