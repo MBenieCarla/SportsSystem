@@ -41,9 +41,21 @@ urlpatterns = [
     path('organizer/tournament-requests/', views.tournament_requests, name='tournament_requests'),
     path('organizer/update-scores/', views.update_match_scores, name='update_match_scores'),
 
-    # Add these URLs
+  
 path('trainer/tournaments/', views.tournament_list_for_trainer, name='tournament_list_for_trainer'),
 path('trainer/apply/<int:tournament_id>/', views.apply_to_tournament, name='apply_to_tournament'),
 path('organizer/applications/<int:tournament_id>/', views.manage_tournament_applications, name='manage_tournament_applications'),
 path('tournament-schedule/', views.tournament_schedule_view, name='tournament_schedule'),
+    path('match-schedule/', views.match_schedule_view, name='match_schedule_view'),
+    
+   
+   
+
+path('match-schedule/', views.match_schedule_view, name='match_schedule_view'),
+
+
+path('organizer/create-match/', views.create_match, name='create_match'),
+
+
+path('update-score/', views.update_match_score, name='update_match_score'),
 ]

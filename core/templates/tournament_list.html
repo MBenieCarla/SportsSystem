@@ -8,7 +8,7 @@
     <h1 style="color: #1B2A4A;">Available Tournaments</h1>
     
     <a href="{% url 'accounts:trainer_dashboard' %}" style="display: inline-block; margin-bottom: 1.5rem; background: #6c757d; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px;">
-        <i class="fas fa-arrow-left"></i> Back to Dashboard
+        <i class="fas fa-arrow-left"></i> Back
     </a>
 
     {% if tournaments %}
@@ -16,24 +16,46 @@
         <div style="background: white; padding: 1.5rem; margin-bottom: 1rem; border-radius: 5px; border: 1px solid #ddd;">
             <h3 style="color: #1B2A4A; margin: 0;">{{ tournament.title }}</h3>
             <p>{{ tournament.sport_type }} | {{ tournament.location }} | Teams: {{ tournament.get_team_count }}/{{ tournament.max_teams }}</p>
-            <p style="font-size: 0.9rem; color: #6c757d;">
-                {{ tournament.start_date|date:"M d, Y" }} - {{ tournament.end_date|date:"M d, Y" }}
-            </p>
             
-            <!-- Check application status -->
-            {% with status=app_status|get_item:tournament.id %}
-                {% if status == 'pending' %}
-                    <span style="background: #fff3cd; color: #856404; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">
-                        ⏳ Pending Approval
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem; color: #6c757d; margin-bottom: 0.5rem;">
+                <div>
+                    <strong>Start:</strong> {{ tournament.start_date|date:"M d, Y" }}
+                </div>
+                <div>
+                    <strong>End:</strong> {{ tournament.end_date|date:"M d, Y" }}
+                </div>
+                <div>
+                    <strong>📅 Registration Deadline:</strong> 
+                    <span style="color: {% if tournament.registration_deadline < now %}#dc3545{% else %}#1B2A4A{% endif %}; font-weight: bold;">
+                        {{ tournament.registration_deadline|date:"M d, Y" }}
                     </span>
-                {% elif status == 'approved' %}
-                    <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">
-                        ✅ Approved
-                    </span>
-                {% elif status == 'rejected' %}
-                    <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">
-                        ❌ Rejected
-                    </span>
+                    {% if tournament.registration_deadline < now %}
+                        <span style="color: #dc3545; font-size: 0.8rem;">(Expired)</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <strong>Teams:</strong> {{ tournament.get_team_count }}/{{ tournament.max_teams }}
+                </div>
+            </div>
+            
+            <!-- Status -->
+            {% if tournament.my_status == 'pending' %}
+                <span style="background: #fff3cd; color: #856404; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">
+                    ⏳ Pending Approval
+                </span>
+            {% elif tournament.my_status == 'approved' %}
+                <span style="background: #d4edda; color: #155724; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">
+                    ✅ Approved
+                </span>
+            {% elif tournament.my_status == 'rejected' %}
+                <span style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">
+                    ❌ Rejected
+                </span>
+            {% else %}
+                {% if tournament.registration_deadline < now %}
+                    <div style="margin-top: 0.5rem; padding: 0.5rem; background: #f8d7da; border-radius: 4px; color: #721c24;">
+                        <i class="fas fa-exclamation-circle"></i> Registration deadline has passed. Cannot apply.
+                    </div>
                 {% else %}
                     <form method="POST" action="{% url 'core:apply_to_tournament' tournament.id %}" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-top: 0.5rem;">
                         {% csrf_token %}
@@ -49,7 +71,7 @@
                         </button>
                     </form>
                 {% endif %}
-            {% endwith %}
+            {% endif %}
         </div>
         {% endfor %}
     {% else %}

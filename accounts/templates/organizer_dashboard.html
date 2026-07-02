@@ -1,37 +1,396 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Organizer Dashboard{% endblock %}
+{% block title %}Organizer Dashboard - Community Sports{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-wrapper {
+        display: flex;
+        gap: 2rem;
+        min-height: calc(100vh - 200px);
+    }
+    
+    .dashboard-sidebar {
+        width: 260px;
+        flex-shrink: 0;
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 1.5rem 0;
+        height: fit-content;
+        position: sticky;
+        top: 90px;
+    }
+    
+    .sidebar-header {
+        padding: 0 1.5rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+        text-align: center;
+    }
+    
+    .sidebar-header .avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--navy-blue);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0 auto 0.75rem;
+    }
+    
+    .sidebar-header .user-name {
+        font-weight: 600;
+        color: var(--gray-800);
+        font-size: 1.1rem;
+    }
+    
+    .sidebar-header .user-role {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+    }
+    
+    .sidebar-nav {
+        padding: 1rem 0;
+        list-style: none;
+    }
+    
+    .sidebar-nav li {
+        margin-bottom: 0.25rem;
+    }
+    
+    .sidebar-nav .nav-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        color: var(--gray-700);
+        text-decoration: none;
+        transition: all 0.3s;
+        border-left: 3px solid transparent;
+        font-size: 0.95rem;
+    }
+    
+    .sidebar-nav .nav-item:hover {
+        background: var(--gray-50);
+        color: var(--navy-blue);
+        border-left-color: var(--navy-blue);
+    }
+    
+    .sidebar-nav .nav-item.active {
+        background: var(--gray-50);
+        color: var(--navy-blue);
+        border-left-color: var(--navy-blue);
+        font-weight: 600;
+    }
+    
+    .sidebar-nav .nav-item .icon {
+        width: 24px;
+        margin-right: 0.75rem;
+        text-align: center;
+        font-size: 1.1rem;
+    }
+    
+    .sidebar-nav .nav-divider {
+        border-top: 1px solid var(--gray-200);
+        margin: 0.75rem 1.5rem;
+    }
+    
+    .sidebar-nav .nav-label {
+        padding: 0.5rem 1.5rem;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--gray-400);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    .sidebar-nav .badge-pending {
+        background: #dc3545;
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.1rem 0.5rem;
+        border-radius: 50%;
+        margin-left: auto;
+    }
+    
+    .dashboard-main {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .dashboard-main .welcome-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .dashboard-main .welcome-section h1 {
+        color: var(--navy-blue);
+        font-size: 1.75rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .dashboard-main .welcome-section p {
+        color: var(--gray-500);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: var(--white);
+        border-radius: 10px;
+        padding: 1.25rem;
+        border: 1px solid var(--gray-200);
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--navy-blue);
+    }
+    
+    .stat-card .stat-label {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        margin-top: 0.25rem;
+    }
+    
+    .stat-card .stat-icon {
+        font-size: 1.5rem;
+        color: var(--navy-light);
+        margin-bottom: 0.5rem;
+    }
+    
+    .quick-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+    
+    .quick-actions .btn {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+    }
+    
+    @media (max-width: 1024px) {
+        .dashboard-wrapper {
+            flex-direction: column;
+        }
+        .dashboard-sidebar {
+            width: 100%;
+            position: static;
+        }
+        .sidebar-nav {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 0.5rem 1rem;
+            gap: 0.25rem;
+        }
+        .sidebar-nav li {
+            margin-bottom: 0;
+        }
+        .sidebar-nav .nav-item {
+            padding: 0.5rem 1rem;
+            border-left: none;
+            border-bottom: 2px solid transparent;
+            border-radius: 4px;
+        }
+        .sidebar-nav .nav-item.active {
+            border-left: none;
+            border-bottom-color: var(--navy-blue);
+        }
+        .sidebar-nav .nav-divider,
+        .sidebar-nav .nav-label {
+            display: none;
+        }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            text-align: left;
+        }
+        .sidebar-header .avatar {
+            width: 50px;
+            height: 50px;
+            font-size: 1.25rem;
+            margin: 0;
+        }
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .quick-actions {
+            flex-direction: column;
+        }
+        .quick-actions .btn {
+            width: 100%;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div style="max-width: 1200px; margin: 0 auto; padding: 1rem;">
-    <h1 style="color: #1B2A4A;">Organizer Dashboard</h1>
-    <p>Welcome, {{ user.first_name|default:user.username }}!</p>
-    
-    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin: 1.5rem 0;">
-        <a href="{% url 'core:create_tournament' %}" style="background: #1B2A4A; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px;">+ Create Tournament</a>
-        <a href="{% url 'core:manage_tournaments' %}" style="background: #1B2A4A; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px;">Manage Tournaments</a>
-        <a href="{% url 'core:tournament_requests' %}" style="background: #1B2A4A; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px;">
-            Team Requests
-            {% if pending_requests_count > 0 %}
-                <span style="background: #dc3545; color: white; padding: 0.1rem 0.6rem; border-radius: 50%; margin-left: 0.25rem;">{{ pending_requests_count }}</span>
-            {% endif %}
-        </a>
-        <a href="{% url 'core:update_match_scores' %}" style="background: #1B2A4A; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px;">Update Scores</a>
-    </div>
-    
-    <h2 style="color: #1B2A4A;">Your Tournaments</h2>
-    {% if tournaments %}
-        {% for t in tournaments %}
-        <div style="background: white; padding: 1rem; margin-bottom: 0.5rem; border-radius: 5px; border: 1px solid #ddd;">
-            <strong>{{ t.title }}</strong>
-            <span style="float: right;">{{ t.get_status_display }}</span>
-            <br>
-            {{ t.sport_type }} | Teams: {{ t.get_team_count }}/{{ t.max_teams }}
+<div class="dashboard-wrapper">
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-header">
+            <div class="avatar">{{ user.username|first|upper }}</div>
+            <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+            <div class="user-role">Organizer</div>
         </div>
-        {% endfor %}
-    {% else %}
-        <p style="color: #6c757d;">No tournaments created yet.</p>
-    {% endif %}
+        
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{% url 'accounts:organizer_dashboard' %}" class="nav-item active">
+                    <span class="icon"><i class="fas fa-home"></i></span>
+                    Home Page
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'accounts:profile' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-user"></i></span>
+                    My Profile
+                </a>
+            </li>
+            
+            <li class="nav-divider"></li>
+            
+            <li class="nav-label">Tournaments</li>
+            <li>
+                <a href="{% url 'core:create_tournament' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-plus-circle"></i></span>
+                    Create Tournament
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'core:manage_tournaments' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-list"></i></span>
+                    Manage Tournaments
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'core:tournament_requests' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-user-plus"></i></span>
+                    Team Requests
+                    {% if pending_requests_count > 0 %}
+                    <span class="badge-pending">{{ pending_requests_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            
+            <li class="nav-divider"></li>
+            
+            <!-- ✅ Match Schedule - Only here -->
+            <li>
+                <a href="{% url 'core:match_schedule_view' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-calendar-check"></i></span>
+                    Match Schedule
+                </a>
+            </li>
+            
+            <li>
+                <a href="{% url 'core:update_match_scores' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-edit"></i></span>
+                    Update Scores
+                </a>
+            </li>
+            
+            <li class="nav-divider"></li>
+            
+            <li>
+                <a href="{% url 'core:chat_list' %}" class="nav-item">
+                    <span class="icon"><i class="fas fa-comments"></i></span>
+                    Messages
+                </a>
+            </li>
+            
+            <li>
+                <a href="{% url 'accounts:logout' %}" class="nav-item" style="color: #dc3545;">
+                    <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+                    Log Out
+                </a>
+            </li>
+        </ul>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <div class="welcome-section">
+            <h1><i class="fas fa-calendar-alt" style="color: var(--navy-blue);"></i> Organizer Dashboard</h1>
+            <p>Welcome, {{ user.first_name|default:user.username }}!</p>
+        </div>
+        
+        <!-- Stats - ✅ No duplicate buttons here -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-trophy"></i></div>
+                <div class="stat-number">{{ total_tournaments }}</div>
+                <div class="stat-label">Total Tournaments</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-number">{{ total_teams }}</div>
+                <div class="stat-label">Teams Registered</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-futbol"></i></div>
+                <div class="stat-number">{{ total_matches }}</div>
+                <div class="stat-label">Total Matches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="stat-number">{{ pending_requests_count }}</div>
+                <div class="stat-label">Pending Requests</div>
+            </div>
+        </div>
+        
+        <!-- Your Tournaments -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-trophy" style="color: var(--navy-blue);"></i>
+                    Your Tournaments
+                </div>
+            </div>
+            
+            {% if tournaments %}
+                {% for tournament in tournaments %}
+                <div style="padding: 0.75rem 0; border-bottom: 1px solid var(--gray-200);">
+                    <strong>{{ tournament.title }}</strong>
+                    <span style="float: right;">
+                        <span class="badge badge-{{ tournament.status }}">
+                            {{ tournament.get_status_display }}
+                        </span>
+                    </span>
+                    <br>
+                    <span style="font-size: 0.875rem; color: var(--gray-600);">
+                        {{ tournament.sport_type }} | Teams: {{ tournament.get_team_count }}/{{ tournament.max_teams }}
+                    </span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--gray-500); text-align: center; padding: 1rem;">
+                    No tournaments created yet.
+                </p>
+            {% endif %}
+        </div>
+    </main>
 </div>
 {% endblock %}

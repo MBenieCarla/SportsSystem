@@ -498,24 +498,6 @@ def update_match_scores(request):
     return render(request, 'update_scores.html', context)
 
 
-# ==================== SHARED VIEWS ====================
-
-@login_required
-def match_schedule_view(request):
-    """View match schedules - accessible by all users"""
-    if request.user.user_type == 'organizer':
-        tournaments = request.user.tournaments.all()
-        matches = Match.objects.filter(tournament__in=tournaments).order_by('date', 'time')
-    else:
-        matches = Match.objects.filter(date__gte=timezone.now().date()).order_by('date', 'time')
-    
-    context = {
-        'matches': matches,
-        'is_organizer': request.user.user_type == 'organizer',
-    }
-    return render(request, 'match_schedule.html', context)
-
-
 # ==================== CHAT VIEWS ====================
 
 @login_required
@@ -657,6 +639,8 @@ def send_message_ajax_view(request):
 
 # ==================== TOURNAMENT APPLICATION VIEWS ====================
 
+from django.utils import timezone
+
 @login_required
 @role_required(['trainer'])
 def tournament_list_for_trainer(request):
@@ -665,23 +649,26 @@ def tournament_list_for_trainer(request):
         status__in=['upcoming', 'ongoing']
     ).order_by('start_date')
     
-    # Get teams belonging to this trainer
     trainer_teams = request.user.trainer_teams.filter(is_active=True)
     
-    # Get applications for these teams
+    # Get applications
     applications = TournamentApplication.objects.filter(
         team__in=trainer_teams
-    ).select_related('tournament', 'team')
+    )
     
-    # Create a dict for quick lookup: tournament_id -> status
-    app_status = {}
+    # Create status dictionary
+    status_dict = {}
     for app in applications:
-        app_status[app.tournament.id] = app.status
+        status_dict[app.tournament_id] = app.status
+    
+    # Add status and check deadline
+    for tournament in tournaments:
+        tournament.my_status = status_dict.get(tournament.id, None)
     
     context = {
         'tournaments': tournaments,
         'trainer_teams': trainer_teams,
-        'app_status': app_status,
+        'now': timezone.now().date(),  # ✅ Add this
     }
     return render(request, 'tournament_list.html', context)
 
@@ -810,3 +797,140 @@ def tournament_schedule_view(request):
         'applied_tournament_ids': applied_tournament_ids,
     }
     return render(request, 'tournament_schedule.html', context)
+
+# ==================== UPDATE MATCH SCORE ====================
+
+@login_required
+@role_required(['organizer'])
+def update_match_score(request):
+    """Organizer updates match score"""
+    if request.method == 'POST':
+        match_id = request.POST.get('match_id')
+        score_home = request.POST.get('score_home')
+        score_away = request.POST.get('score_away')
+        
+        # Get the match
+        match = get_object_or_404(Match, id=match_id, tournament__organizer=request.user)
+        
+        # Update score
+        match.score_home = int(score_home)
+        match.score_away = int(score_away)
+        match.is_played = True  
+        match.save()
+        
+        messages.success(request, f'Score updated: {match.team_home.name} {score_home} - {score_away} {match.team_away.name}')
+        return redirect('core:match_schedule_view')
+    
+    return redirect('core:match_schedule_view')
+# ==================== VIEW MATCH SCHEDULE ====================
+@login_required
+def match_schedule_view(request):
+    """View match schedule + create match form for organizers"""
+    user = request.user
+    
+    if user.user_type == 'organizer':
+        tournaments = user.tournaments.all()
+        matches = Match.objects.filter(tournament__in=tournaments).order_by('date', 'time')
+        all_teams = Team.objects.filter(is_active=True)
+    else:
+        matches = Match.objects.filter(date__gte=timezone.now().date()).order_by('date', 'time')
+        all_teams = []
+    
+    if user.user_type == 'trainer':
+        trainer_teams = user.trainer_teams.all()
+        my_team_matches = matches.filter(
+            Q(team_home__in=trainer_teams) | Q(team_away__in=trainer_teams)
+        )
+    elif user.user_type == 'player':
+        player_teams = user.player_teams.all()
+        my_team_matches = matches.filter(
+            Q(team_home__in=player_teams) | Q(team_away__in=player_teams)
+        )
+    else:
+        my_team_matches = None
+    
+    context = {
+        'matches': matches,
+        'my_team_matches': my_team_matches,
+        'is_organizer': user.user_type == 'organizer',
+        'tournaments': user.tournaments.all() if user.user_type == 'organizer' else [],
+        'all_teams': all_teams,
+        'user': user,
+    }
+    return render(request, 'match_schedule.html', context)
+
+# ==================== CREATE MATCH ====================
+
+@login_required
+@role_required(['organizer'])
+def create_match(request):
+    """Organizer creates a match between two teams"""
+    if request.method == 'POST':
+        # Get form data
+        tournament_id = request.POST.get('tournament_id')
+        team_home_id = request.POST.get('team_home')
+        team_away_id = request.POST.get('team_away')
+        date = request.POST.get('date')
+        time = request.POST.get('time')
+        location = request.POST.get('location')
+        
+        # Validate all fields
+        if not all([tournament_id, team_home_id, team_away_id, date, time, location]):
+            messages.error(request, 'All fields are required.')
+            return redirect('core:match_schedule_view')
+        
+        # Get tournament
+        try:
+            tournament = Tournament.objects.get(id=tournament_id, organizer=request.user)
+        except Tournament.DoesNotExist:
+            messages.error(request, 'Tournament not found.')
+            return redirect('core:match_schedule_view')
+        
+        # Get teams
+        try:
+            team_home = Team.objects.get(id=team_home_id)
+            team_away = Team.objects.get(id=team_away_id)
+        except Team.DoesNotExist:
+            messages.error(request, 'Team not found.')
+            return redirect('core:match_schedule_view')
+        
+        # Check if teams are registered in tournament
+        if team_home not in tournament.teams_registered.all():
+            messages.error(request, f'"{team_home.name}" is not registered in this tournament.')
+            return redirect('core:match_schedule_view')
+            
+        if team_away not in tournament.teams_registered.all():
+            messages.error(request, f'"{team_away.name}" is not registered in this tournament.')
+            return redirect('core:match_schedule_view')
+        
+        # Check if home and away are different
+        if team_home == team_away:
+            messages.error(request, 'Home and Away teams cannot be the same.')
+            return redirect('core:match_schedule_view')
+        
+        # Check if match already exists
+        existing = Match.objects.filter(
+            tournament=tournament,
+            team_home=team_home,
+            team_away=team_away,
+            date=date
+        ).exists()
+        
+        if existing:
+            messages.warning(request, 'This match already exists.')
+            return redirect('core:match_schedule_view')
+        
+        # Create match
+        Match.objects.create(
+            tournament=tournament,
+            team_home=team_home,
+            team_away=team_away,
+            date=date,
+            time=time,
+            location=location
+        )
+        
+        messages.success(request, f'✅ Match created: {team_home.name} vs {team_away.name}')
+        return redirect('core:match_schedule_view')
+    
+    return redirect('core:match_schedule_view')
