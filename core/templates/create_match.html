@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Match - Community Sports{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #1B2A4A;">Create Match</h1>
+    
+    <a href="{% url 'core:match_schedule_view' %}" style="background: #6c757d; color: white; padding: 0.5rem 1.5rem; text-decoration: none; border-radius: 4px; margin-bottom: 1rem; display: inline-block;">
+        <i class="fas fa-arrow-left"></i> Back to Schedule
+    </a>
+
+    <form method="POST" style="background: white; padding: 1.5rem; border-radius: 5px; border: 1px solid #ddd;">
+        {% csrf_token %}
+        
+        <!-- Select Tournament -->
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Tournament *</label>
+            <select name="tournament_id" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="">-- Select Tournament --</option>
+                {% for tournament in tournaments %}
+                    <option value="{{ tournament.id }}">{{ tournament.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Team Home -->
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Home Team *</label>
+            <select name="team_home" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="">-- Select Home Team --</option>
+                {% for team in all_teams %}
+                    <option value="{{ team.id }}">{{ team.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Team Away -->
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Away Team *</label>
+            <select name="team_away" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="">-- Select Away Team --</option>
+                {% for team in all_teams %}
+                    <option value="{{ team.id }}">{{ team.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Date -->
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Date *</label>
+            <input type="date" name="date" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <!-- Time -->
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Time *</label>
+            <input type="time" name="time" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <!-- Location -->
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-weight: bold; margin-bottom: 0.25rem;">Location *</label>
+            <input type="text" name="location" required placeholder="e.g., Nairobi Stadium" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+        
+        <button type="submit" style="background: #1B2A4A; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;">
+            <i class="fas fa-save"></i> Create Match
+        </button>
+    </form>
+</div>
+{% endblock %}
