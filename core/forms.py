@@ -12,7 +12,7 @@ class TrainingSessionForm(forms.ModelForm):
     
     class Meta:
         model = TrainingSession
-        fields = ['team', 'title', 'description', 'date', 'start_time', 'end_time', 'location', 'max_participants']
+        fields = ['team', 'title', 'description', 'date', 'start_time', 'end_time', 'location']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'start_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),

@@ -285,16 +285,6 @@
                     Manage Tournaments
                 </a>
             </li>
-            <li>
-                <a href="{% url 'core:tournament_requests' %}" class="nav-item">
-                    <span class="icon"><i class="fas fa-user-plus"></i></span>
-                    Team Requests
-                    {% if pending_requests_count > 0 %}
-                    <span class="badge-pending">{{ pending_requests_count }}</span>
-                    {% endif %}
-                </a>
-            </li>
-            
             <li class="nav-divider"></li>
             
             <!-- ✅ Match Schedule - Only here -->
