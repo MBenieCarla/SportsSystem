@@ -1,0 +1,370 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Community Sports{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: white;
+        padding: 1.25rem;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+    }
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1B2A4A;
+        line-height: 1.2;
+    }
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+    }
+    .stat-icon {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .quick-action-card {
+        padding: 1.25rem;
+        border-radius: 10px;
+        text-decoration: none;
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #e9ecef;
+        background: white;
+        display: block;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .quick-action-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        text-decoration: none;
+    }
+    .quick-action-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .quick-action-label {
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+    
+    .activity-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f3f5;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    .activity-user {
+        font-weight: 600;
+        color: #1B2A4A;
+    }
+    .activity-action {
+        color: #495057;
+    }
+    .activity-time {
+        font-size: 0.8rem;
+        color: #adb5bd;
+        white-space: nowrap;
+    }
+    
+    .user-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f3f5;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .user-item:last-child {
+        border-bottom: none;
+    }
+    .user-name {
+        font-weight: 500;
+        color: #1B2A4A;
+    }
+    .user-role {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        background: #e9ecef;
+        color: #495057;
+    }
+    .user-role.player {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    .user-role.trainer {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .user-role.organizer {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .user-role.admin {
+        background: #fce4ec;
+        color: #9b1c2c;
+    }
+    
+    .section-title {
+        color: #1B2A4A;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        font-size: 1.15rem;
+    }
+    
+    .bg-warning-soft {
+        background: #fff8e1;
+        border: 1px solid #ffd54f;
+    }
+    .bg-danger-soft {
+        background: #ffebee;
+        border: 1px solid #ef9a9a;
+    }
+    .bg-success-soft {
+        background: #e8f5e9;
+        border: 1px solid #a5d6a7;
+    }
+    .bg-info-soft {
+        background: #e3f2fd;
+        border: 1px solid #90caf9;
+    }
+    
+    .welcome-banner {
+        background: linear-gradient(135deg, #1B2A4A 0%, #2a3f6b 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+    }
+    .welcome-banner h1 {
+        color: white;
+        margin-bottom: 0.25rem;
+    }
+    .welcome-banner p {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .pending-badge {
+        background: #dc3545;
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 20px;
+        margin-left: 0.5rem;
+        vertical-align: middle;
+    }
+    
+    @media (max-width: 768px) {
+        .stat-number {
+            font-size: 1.5rem;
+        }
+        .welcome-banner {
+            padding: 1rem 1.25rem;
+        }
+        .welcome-banner h1 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 1rem;">
+
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            <div>
+                <h1>👋 Welcome back, {{ user.first_name|default:user.username }}!</h1>
+                <p>Here's what's happening with your Community Sports platform today.</p>
+            </div>
+            <div style="margin-top: 0.5rem;">
+                <span style="background: rgba(255,255,255,0.15); padding: 0.35rem 1rem; border-radius: 20px; font-size: 0.9rem;">
+                    {{ current_date|date:"l, F j, Y" }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-number">{{ total_users }}</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #28a745;">
+            <div class="stat-icon">✅</div>
+            <div class="stat-number">{{ active_users }}</div>
+            <div class="stat-label">Active Users</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #dc3545;">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-number">{{ pending_users }}</div>
+            <div class="stat-label">Pending Approvals</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #17a2b8;">
+            <div class="stat-icon">🏆</div>
+            <div class="stat-number">{{ total_teams }}</div>
+            <div class="stat-label">Teams</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #ffc107;">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-number">{{ total_tournaments }}</div>
+            <div class="stat-label">Tournaments</div>
+        </div>
+        <div class="stat-card" style="border-left: 4px solid #6f42c1;">
+            <div class="stat-icon">🛡️</div>
+            <div class="stat-number">{{ total_admins }}</div>
+            <div class="stat-label">Admins</div>
+        </div>
+    </div>
+
+    <!-- User Type Breakdown -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="stat-card bg-info-soft">
+            <div class="stat-icon">⚽</div>
+            <div class="stat-number" style="color: #0d47a1;">{{ players }}</div>
+            <div class="stat-label">Players</div>
+        </div>
+        <div class="stat-card bg-success-soft">
+            <div class="stat-icon">🏋️</div>
+            <div class="stat-number" style="color: #1b5e20;">{{ trainers }}</div>
+            <div class="stat-label">Trainers</div>
+        </div>
+        <div class="stat-card bg-warning-soft">
+            <div class="stat-icon">📋</div>
+            <div class="stat-number" style="color: #e65100;">{{ organizers }}</div>
+            <div class="stat-label">Organizers</div>
+        </div>
+    </div>
+
+    <!-- Pending Actions Alert -->
+    {% if pending_users > 0 or flagged_content > 0 %}
+    <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <strong style="color: #856404;">📢 Attention Required:</strong>
+            {% if pending_users > 0 %}
+                <span style="margin-left: 0.5rem; background: #856404; color: white; padding: 0.15rem 0.6rem; border-radius: 20px; font-size: 0.8rem;">{{ pending_users }} pending user{% if pending_users > 1 %}s{% endif %}</span>
+            {% endif %}
+            {% if flagged_content > 0 %}
+                <span style="margin-left: 0.5rem; background: #dc3545; color: white; padding: 0.15rem 0.6rem; border-radius: 20px; font-size: 0.8rem;">{{ flagged_content }} flagged item{% if flagged_content > 1 %}s{% endif %}</span>
+            {% endif %}
+        </div>
+        <a href="{% url 'admin_panel:user_list' %}" style="color: #856404; font-weight: 500; text-decoration: none;">Review Now →</a>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <h3 class="section-title">⚡ Quick Actions</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <a href="{% url 'admin_panel:user_list' %}" class="quick-action-card" style="border-top: 4px solid #0d6efd;">
+            <span class="quick-action-icon">👥</span>
+            <span class="quick-action-label" style="color: #0d6efd;">Manage Users</span>
+        </a>
+        <a href="{% url 'admin_panel:role_list' %}" class="quick-action-card" style="border-top: 4px solid #198754;">
+            <span class="quick-action-icon">🔑</span>
+            <span class="quick-action-label" style="color: #198754;">Manage Roles</span>
+        </a>
+        <a href="{% url 'admin_panel:role_create' %}" class="quick-action-card" style="border-top: 4px solid #fd7e14;">
+            <span class="quick-action-icon">➕</span>
+            <span class="quick-action-label" style="color: #fd7e14;">Create Role</span>
+        </a>
+        <a href="{% url 'admin_panel:audit_log' %}" class="quick-action-card" style="border-top: 4px solid #6f42c1;">
+            <span class="quick-action-icon">📋</span>
+            <span class="quick-action-label" style="color: #6f42c1;">Audit Log</span>
+        </a>
+        <a href="/admin/" class="quick-action-card" style="border-top: 4px solid #dc3545;">
+            <span class="quick-action-icon">⚙️</span>
+            <span class="quick-action-label" style="color: #dc3545;">Django Admin</span>
+        </a>
+    </div>
+
+    <!-- Two Column Layout: Recent Users & Activity -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 0.5rem;">
+        
+        <!-- Recent Users -->
+        <div style="background: white; padding: 1.5rem; border-radius: 10px; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 class="section-title" style="margin-bottom: 0;">👤 Recent Users</h3>
+                <a href="{% url 'admin_panel:user_list' %}" style="color: #0d6efd; font-size: 0.9rem; text-decoration: none;">View All →</a>
+            </div>
+            {% if recent_users %}
+                {% for u in recent_users %}
+                <div class="user-item">
+                    <div>
+                        <div class="user-name">{{ u.username }}</div>
+                        <div style="font-size: 0.8rem; color: #adb5bd;">{{ u.date_joined|date:"M d, Y" }}</div>
+                    </div>
+                    <span class="user-role {% if u.user_type == 'player' %}player{% elif u.user_type == 'trainer' %}trainer{% elif u.user_type == 'organizer' %}organizer{% elif u.is_superuser %}admin{% endif %}">
+                        {% if u.is_superuser %}Admin{% else %}{{ u.get_user_type_display|default:'User' }}{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: #6c757d; text-align: center; padding: 1rem 0;">No users registered yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Recent Activity -->
+        <div style="background: white; padding: 1.5rem; border-radius: 10px; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 class="section-title" style="margin-bottom: 0;">📋 Recent Activity</h3>
+                <a href="{% url 'admin_panel:audit_log' %}" style="color: #0d6efd; font-size: 0.9rem; text-decoration: none;">View All →</a>
+            </div>
+            {% if recent_actions %}
+                {% for action in recent_actions %}
+                <div class="activity-item">
+                    <div>
+                        <span class="activity-user">{{ action.actor.username }}</span>
+                        <span class="activity-action">{{ action.get_action_display }}</span>
+                        {% if action.target_user %}
+                            <span style="color: #6c757d; font-size: 0.85rem;">on {{ action.target_user.username }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="activity-time">{{ action.created_at|timesince }} ago</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 2rem 0; color: #adb5bd;">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📭</div>
+                    <p>No recent activity to display.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Platform Stats Footer -->
+    <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; font-size: 0.9rem; color: #6c757d;">
+        <div>
+            <span>📊 Platform Stats</span>
+        </div>
+        <div>
+            <span style="margin-right: 1rem;">👥 {{ total_users }} total users</span>
+            <span style="margin-right: 1rem;">🏆 {{ total_teams }} teams</span>
+            <span>🎯 {{ total_tournaments }} tournaments</span>
+        </div>
+        <div>
+            <span>🕐 Last updated: {% now "g:i A" %}</span>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

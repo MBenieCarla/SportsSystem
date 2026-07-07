@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Roles - Admin Panel{% endblock %}
+
+{% block extra_css %}
+<style>
+    .role-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    .role-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        transition: transform 0.2s;
+    }
+    .role-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .role-card h3 {
+        margin: 0 0 0.5rem 0;
+        color: #1B2A4A;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .role-card .user-count {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 0.75rem;
+    }
+    .role-card .permissions-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        margin: 0.75rem 0;
+    }
+    .role-card .permission-tag {
+        background: #e9ecef;
+        padding: 0.15rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        color: #495057;
+    }
+    .role-card .role-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+    .btn {
+        padding: 0.4rem 1rem;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 0.9rem;
+    }
+    .btn-primary {
+        background: #1B2A4A;
+        color: white;
+    }
+    .btn-primary:hover {
+        background: #2a3f6b;
+    }
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+    .btn-success:hover {
+        background: #218838;
+    }
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    .btn-danger:hover {
+        background: #c82333;
+    }
+    .btn-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    .btn-warning:hover {
+        background: #e0a800;
+    }
+    .btn-sm {
+        padding: 0.2rem 0.6rem;
+        font-size: 0.8rem;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+        background: white;
+        border-radius: 10px;
+        border: 1px dashed #dee2e6;
+    }
+    .empty-state .icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 1rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+            <h1 style="color: #1B2A4A;">🔑 Manage Roles</h1>
+            <p style="color: #6c757d;">Create and manage user roles with specific permissions.</p>
+        </div>
+        <a href="{% url 'admin_panel:role_create' %}" class="btn btn-success">
+            ➕ Create New Role
+        </a>
+    </div>
+
+    <!-- Role Grid -->
+    <div class="role-grid">
+        {% for role in roles %}
+        <div class="role-card">
+            <h3>
+                {{ role.name }}
+                <span style="font-size: 0.8rem; font-weight: normal; color: #6c757d;">
+                    {{ role.permissions.count }} permission{{ role.permissions.count|pluralize }}
+                </span>
+            </h3>
+            <div class="user-count">
+                👥 {{ role.user_set.count }} user{{ role.user_set.count|pluralize }} with this role
+            </div>
+            <div class="permissions-list">
+                {% for perm in role.permissions.all|slice:":5" %}
+                    <span class="permission-tag">{{ perm.name }}</span>
+                {% empty %}
+                    <span style="color: #adb5bd; font-size: 0.85rem;">No permissions assigned</span>
+                {% endfor %}
+                {% if role.permissions.count > 5 %}
+                    <span class="permission-tag" style="background: #1B2A4A; color: white;">+{{ role.permissions.count|add:"-5" }} more</span>
+                {% endif %}
+            </div>
+            <div class="role-actions">
+                <a href="{% url 'admin_panel:role_update' role.id %}" class="btn btn-primary btn-sm">✏️ Edit</a>
+                <form method="post" action="{% url 'admin_panel:role_delete' role.id %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete the role "{{ role.name }}"? This will remove it from all users.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">🗑️ Delete</button>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state" style="grid-column: 1 / -1;">
+            <span class="icon">📭</span>
+            <h3 style="color: #1B2A4A; margin: 0.5rem 0;">No roles created yet</h3>
+            <p style="color: #6c757d;">Create your first role to start managing user permissions.</p>
+            <a href="{% url 'admin_panel:role_create' %}" class="btn btn-success" style="margin-top: 1rem;">
+                ➕ Create First Role
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

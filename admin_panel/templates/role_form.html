@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_create %}Create Role{% else %}Edit Role - {{ group.name }}{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        color: #1B2A4A;
+        margin-bottom: 0.25rem;
+    }
+    .form-group .help-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .form-group input[type="text"],
+    .form-group textarea {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+    .form-group input[type="text"]:focus,
+    .form-group textarea:focus {
+        border-color: #1B2A4A;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(27,42,74,0.1);
+    }
+    .permissions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 0.5rem;
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 0.5rem;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        background: #f8f9fa;
+    }
+    .permission-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        background: white;
+        border-radius: 4px;
+        border: 1px solid #e9ecef;
+    }
+    .permission-item input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+    .permission-item label {
+        font-weight: normal;
+        font-size: 0.9rem;
+        cursor: pointer;
+        margin: 0;
+    }
+    .permission-item .perm-codename {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+    .btn {
+        padding: 0.6rem 1.5rem;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 1rem;
+    }
+    .btn-primary {
+        background: #1B2A4A;
+        color: white;
+    }
+    .btn-primary:hover {
+        background: #2a3f6b;
+    }
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background: #5a6268;
+    }
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    .btn-danger:hover {
+        background: #c82333;
+    }
+    .select-all-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem;
+        background: #e9ecef;
+        border-radius: 4px;
+    }
+    .select-all-container input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+    }
+    .select-all-container label {
+        font-weight: 600;
+        margin: 0;
+        cursor: pointer;
+    }
+    .app-group {
+        margin-bottom: 1rem;
+    }
+    .app-group .app-header {
+        font-weight: 600;
+        color: #1B2A4A;
+        padding: 0.25rem 0.5rem;
+        background: #e9ecef;
+        border-radius: 4px;
+        margin-bottom: 0.25rem;
+    }
+    .no-permissions {
+        text-align: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #1B2A4A;">
+        {% if is_create %}➕ Create New Role{% else %}✏️ Edit Role: {{ group.name }}{% endif %}
+    </h1>
+    <p style="color: #6c757d;">
+        {% if is_create %}Create a new role and assign permissions.{% else %}Modify permissions for this role.{% endif %}
+    </p>
+
+    <div class="form-container">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="roleName">Role Name</label>
+                <input type="text" name="name" id="roleName" value="{% if group %}{{ group.name }}{% endif %}" placeholder="e.g., Moderator, Trainer Admin" required {% if not is_create %}readonly{% endif %}>
+                <div class="help-text">A descriptive name for this role.</div>
+            </div>
+
+            <div class="form-group">
+                <label>Permissions</label>
+                <div class="help-text" style="margin-bottom: 0.5rem;">Select the permissions this role should have.</div>
+                
+                <div class="select-all-container">
+                    <input type="checkbox" id="selectAll">
+                    <label for="selectAll">Select All Permissions</label>
+                </div>
+
+                <div class="permissions-grid">
+                    {% if all_permissions %}
+                        {% regroup all_permissions by content_type.app_label as app_list %}
+                        {% for app in app_list %}
+                            <div class="app-group" style="grid-column: 1 / -1;">
+                                <div class="app-header">{{ app.grouper|title }}</div>
+                                {% for perm in app.list %}
+                                    <div class="permission-item">
+                                        <input type="checkbox" name="permissions" value="{{ perm.id }}" id="perm_{{ perm.id }}" {% if perm.id in assigned_ids %}checked{% endif %}>
+                                        <label for="perm_{{ perm.id }}">
+                                            {{ perm.name }}
+                                            <span class="perm-codename">({{ perm.codename }})</span>
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-permissions" style="grid-column: 1 / -1;">
+                            <p>No permissions available.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    {% if is_create %}Create Role{% else %}Update Role{% endif %}
+                </button>
+                <a href="{% url 'admin_panel:role_list' %}" class="btn btn-secondary">Cancel</a>
+                {% if not is_create %}
+                    <form method="post" action="{% url 'admin_panel:role_delete' group.id %}" style="display: inline; margin-left: auto;" onsubmit="return confirm('Are you sure you want to delete this role?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete Role</button>
+                    </form>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Select all functionality
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('input[name="permissions"]');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+
+    // Update select all checkbox state when individual checkboxes change
+    document.querySelectorAll('input[name="permissions"]').forEach(cb => {
+        cb.addEventListener('change', function() {
+            const all = document.querySelectorAll('input[name="permissions"]');
+            const checked = document.querySelectorAll('input[name="permissions"]:checked');
+            document.getElementById('selectAll').checked = all.length === checked.length;
+        });
+    });
+</script>
+{% endblock %}

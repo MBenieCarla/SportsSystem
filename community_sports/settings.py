@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'core',
+    'admin_panel',
 ]
 
 MIDDLEWARE = [
@@ -72,8 +73,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'community_sports.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+
 
 import pymysql
 pymysql.install_as_MySQLdb()

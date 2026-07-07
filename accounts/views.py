@@ -48,9 +48,14 @@ def register_view(request):
 
 
 def login_view(request):
-    """User login"""
+    """User login with role-based redirect"""
     if request.user.is_authenticated:
-        return redirect('accounts:dashboard')
+        # Redirect based on user type
+        user = request.user
+        if user.is_superuser or user.user_type == 'admin':
+            return redirect('admin_panel:dashboard')
+        else:
+            return redirect('accounts:dashboard')
     
     if request.method == 'POST':
         form = CustomUserLoginForm(request.POST)
@@ -61,7 +66,12 @@ def login_view(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.username}!')
-                return redirect('accounts:dashboard')
+                
+                # Redirect based on user type
+                if user.is_superuser or user.user_type == 'admin':
+                    return redirect('admin_panel:dashboard')
+                else:
+                    return redirect('accounts:dashboard')
             else:
                 messages.error(request, 'Invalid username or password.')
     else:

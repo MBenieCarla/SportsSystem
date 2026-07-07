@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Users - Admin Panel{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .user-table th {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #1B2A4A;
+        border-bottom: 2px solid #e9ecef;
+    }
+    .user-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+    .user-table tr:hover {
+        background: #f8f9fa;
+    }
+    .user-table .actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    .badge-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    .badge-active {
+        background: #d4edda;
+        color: #155724;
+    }
+    .badge-inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    .badge-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    .role-badge {
+        padding: 0.2rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        background: #e9ecef;
+        color: #495057;
+        display: inline-block;
+        margin: 0.1rem;
+    }
+    .role-badge.admin {
+        background: #fce4ec;
+        color: #9b1c2c;
+    }
+    .role-badge.player {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    .role-badge.trainer {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .role-badge.organizer {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .filter-bar {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .filter-bar select, .filter-bar input {
+        padding: 0.4rem 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+    .filter-bar .btn {
+        padding: 0.4rem 1rem;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    .btn-primary {
+        background: #1B2A4A;
+        color: white;
+    }
+    .btn-primary:hover {
+        background: #2a3f6b;
+    }
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    .btn-danger:hover {
+        background: #c82333;
+    }
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+    .btn-success:hover {
+        background: #218838;
+    }
+    .btn-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    .btn-warning:hover {
+        background: #e0a800;
+    }
+    .btn-sm {
+        padding: 0.2rem 0.6rem;
+        font-size: 0.8rem;
+    }
+    .pagination {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-top: 1.5rem;
+    }
+    .pagination a, .pagination span {
+        padding: 0.4rem 0.8rem;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        text-decoration: none;
+        color: #1B2A4A;
+    }
+    .pagination .current {
+        background: #1B2A4A;
+        color: white;
+        border-color: #1B2A4A;
+    }
+    .pagination a:hover {
+        background: #e9ecef;
+    }
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-overlay.active {
+        display: flex;
+    }
+    .modal {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    .modal h3 {
+        margin-top: 0;
+        color: #1B2A4A;
+    }
+    .modal .form-group {
+        margin-bottom: 1rem;
+    }
+    .modal .form-group label {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+    }
+    .modal .form-group textarea {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        resize: vertical;
+    }
+    .modal .modal-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        margin-top: 1rem;
+    }
+    .modal .modal-actions .btn {
+        padding: 0.5rem 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 1rem;">
+    <h1 style="color: #1B2A4A;">👥 Manage Users</h1>
+    <p style="color: #6c757d;">View, filter, and manage all registered users.</p>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <form method="get" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; width: 100%;">
+            <input type="text" name="search" placeholder="Search users..." value="{{ current_filters.search|default:'' }}" style="flex: 1; min-width: 200px;">
+            <select name="user_type">
+                <option value="">All Types</option>
+                {% for value, label in user_type_choices %}
+                    <option value="{{ value }}" {% if current_filters.user_type == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="active_status">
+                <option value="">All Status</option>
+                <option value="active" {% if current_filters.active_status == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if current_filters.active_status == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{% url 'admin_panel:user_list' %}" class="btn btn-warning">Clear</a>
+        </form>
+    </div>
+
+    <!-- User Table -->
+    <div style="overflow-x: auto;">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Type</th>
+                    <th>Roles</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <strong>{{ user.username }}</strong>
+                        {% if user.is_superuser %}
+                            <span class="badge-status" style="background: #fce4ec; color: #9b1c2c; font-size: 0.7rem;">Admin</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.email|default:"-" }}</td>
+                    <td>{{ user.get_user_type_display|default:"User" }}</td>
+                    <td>
+                        {% for group in user.groups.all %}
+                            <span class="role-badge">{{ group.name }}</span>
+                        {% empty %}
+                            <span style="color: #6c757d; font-size: 0.85rem;">No roles</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if user.is_active %}
+                            <span class="badge-status badge-active">✅ Active</span>
+                        {% else %}
+                            <span class="badge-status badge-inactive">❌ Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.85rem; color: #6c757d;">{{ user.date_joined|date:"M d, Y" }}</td>
+                    <td>
+                        <div class="actions">
+                            {% if user.is_active %}
+                                <button class="btn btn-danger btn-sm deactivate-btn" data-user-id="{{ user.id }}" data-username="{{ user.username }}">Deactivate</button>
+                            {% else %}
+                                <form method="post" action="{% url 'admin_panel:user_reactivate' user.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm">Reactivate</button>
+                                </form>
+                            {% endif %}
+                            <button class="btn btn-warning btn-sm moderate-btn" data-user-id="{{ user.id }}" data-username="{{ user.username }}">Moderate</button>
+                            <form method="post" action="{% url 'admin_panel:user_assign_role' user.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <select name="group_id" style="padding: 0.2rem; font-size: 0.8rem;">
+                                    <option value="">Add Role</option>
+                                    {% for group in all_groups %}
+                                        <option value="{{ group.id }}">{{ group.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" name="action" value="add" class="btn btn-primary btn-sm">+</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: #6c757d;">
+                        No users found matching your criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% for key, value in current_filters.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">First</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in current_filters.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+        {% endif %}
+        <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, value in current_filters.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in current_filters.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Last</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Deactivate Modal -->
+<div class="modal-overlay" id="deactivateModal">
+    <div class="modal">
+        <h3>⚠️ Deactivate User</h3>
+        <p>Are you sure you want to deactivate <strong id="deactivateUsername"></strong>?</p>
+        <p style="color: #6c757d; font-size: 0.9rem;">This user will not be able to log in until reactivated.</p>
+        <form method="post" id="deactivateForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="deactivateReason">Reason (optional):</label>
+                <textarea name="reason" id="deactivateReason" rows="2" placeholder="Why is this user being deactivated?"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-warning" onclick="closeModal('deactivateModal')">Cancel</button>
+                <button type="submit" class="btn btn-danger">Deactivate User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Moderate Modal -->
+<div class="modal-overlay" id="moderateModal">
+    <div class="modal">
+        <h3>🛡️ Moderate Profile</h3>
+        <p>Remove inappropriate content from <strong id="moderateUsername"></strong>'s profile.</p>
+        <form method="post" id="moderateForm" action="{% url 'admin_panel:moderate_profile' 0 %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>What to remove:</label>
+                <select name="field" style="width: 100%; padding: 0.5rem; border: 1px solid #ced4da; border-radius: 4px;">
+                    <option value="bio">Bio</option>
+                    <option value="display_name">Display Name</option>
+                    <option value="avatar_url">Avatar</option>
+                    <option value="all">All Content</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="moderateReason">Reason:</label>
+                <textarea name="reason" id="moderateReason" rows="2" placeholder="Why is this content being removed?" required></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-warning" onclick="closeModal('moderateModal')">Cancel</button>
+                <button type="submit" class="btn btn-danger">Remove Content</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Deactivate modal
+    document.querySelectorAll('.deactivate-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.dataset.userId;
+            const username = this.dataset.username;
+            document.getElementById('deactivateUsername').textContent = username;
+            document.getElementById('deactivateForm').action = `/admin-panel/users/${userId}/deactivate/`;
+            document.getElementById('deactivateModal').classList.add('active');
+        });
+    });
+
+    // Moderate modal
+    document.querySelectorAll('.moderate-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.dataset.userId;
+            const username = this.dataset.username;
+            document.getElementById('moderateUsername').textContent = username;
+            document.getElementById('moderateForm').action = `/admin-panel/moderate/${userId}/`;
+            document.getElementById('moderateModal').classList.add('active');
+        });
+    });
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+    }
+
+    // Close modal on outside click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+    });
+</script>
+{% endblock %}
