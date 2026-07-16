@@ -24,6 +24,7 @@ Technologies Used
 * Git and GitHub
 
 User Roles
+
 Player
 Players can register, select a team, view their dashboard, access training information, and submit feedback.
 Trainer
